@@ -1,0 +1,26 @@
+name: main
+channels:
+   - conda-forge
+dependencies:
+   - python=3.11
+   - numpy
+   - matplotlib
+   - cartopy
+   - jupyter
+   - metpy
+   - siphon
+   - pandas
+   - pip
+   - xarray
+   - ipywidgets
+   - ffmpeg
+   - boto3
+   - botocore
+   - jupyterlab
+   - netcdf4
+   - cfgrib
+   - plotly
+   - cdsapi
+   - fsspec
+   - pip:
+      - python-awips
