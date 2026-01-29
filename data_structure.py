@@ -4,9 +4,9 @@ import os
 # 1. Define your file paths
 # Replace these with your actual filenames
 files = {
-    'Average Temp': 'cag_tavg_data.csv',
-    'Max Temp': 'cag_tmax_data.csv',
-    'Min Temp': 'cag_tmin_data.csv',
+    'Average Temperature': 'cag_tavg_data.csv',
+    'Max Temperature': 'cag_tmax_data.csv',
+    'Min Temperature': 'cag_tmin_data.csv',
     'Precipitation': 'cag_pcp_data.csv'
 }
 
