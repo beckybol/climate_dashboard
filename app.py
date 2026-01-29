@@ -46,7 +46,7 @@ app.layout = dbc.Container([
                     dcc.Dropdown(
                         id='variable-dropdown',
                         options=[{'label': i, 'value': i} for i in df['Variable'].unique()],
-                        value='Average Temp',
+                        value='Average Temperature',
                         clearable=False,
                         className="mb-3" # Margin bottom
                     ),
@@ -60,7 +60,8 @@ app.layout = dbc.Container([
                             {'label': 'May', 'value': 5}, {'label': 'June', 'value': 6},
                             {'label': 'July', 'value': 7}, {'label': 'August', 'value': 8},
                             {'label': 'September', 'value': 9}, {'label': 'October', 'value': 10},
-                            {'label': 'November', 'value': 11}, {'label': 'December', 'value': 12}
+                            {'label': 'November', 'value': 11}, {'label': 'December', 'value': 12}, 
+                            {'label': 'Annual (All Months)', 'value': 'annual'}
                         ],
                         value='annual',
                         multi=True,
@@ -95,7 +96,7 @@ app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             dbc.Card([
-                dbc.CardHeader("Historical Trend Analysis"),
+                dbc.CardHeader("Historical Time Series"),
                 dbc.CardBody([
                     dcc.Graph(id='trend-chart')
                 ])
@@ -150,6 +151,12 @@ def update_map(selected_variable, selected_months):
     #    that matches the filter, or an average. 
     #    Let's stick to your request: "Initial loading... latest month". 
     
+    # Assign units based on variable
+    if 'Precipitation' in selected_variable:
+        units = "inches"
+    else:
+        units = "°F"
+
     # Default trigger: Use Latest Date
     target_date = latest_date
     map_title = f"{selected_variable} - {latest_month_name}"
@@ -191,7 +198,8 @@ def update_map(selected_variable, selected_months):
         color='Value',
         scope="usa",
         color_continuous_scale="Viridis" if 'Precipitation' in selected_variable else "RdBu_r",
-        hover_name="State_Code"
+        hover_name="State_Code",
+        labels={'Value': units}
     )
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     
@@ -205,6 +213,11 @@ def update_map(selected_variable, selected_months):
      Input('month-dropdown', 'value')]
 )
 def update_chart(clickData, selected_variable, selected_months):
+    if 'Precipitation' in selected_variable:
+        units = "Precipitation (inches)"
+    else:
+        units = "Temperature (°F)"
+
     # 1. Determine State
     if clickData is None:
         state_code = 'CO' # Default
@@ -238,7 +251,8 @@ def update_chart(clickData, selected_variable, selected_months):
         x='Year', 
         y='Value', 
         title=f"{state_code} - {selected_variable} ({subtitle})",
-        markers=True # Adds dots to the line so you can see the individual yearly points
+        markers=True, # Adds dots to the line so you can see the individual yearly points
+        labels={'Value': units, 'Year': 'Year'}
     )
     
     # Optional: Add OLS Trendline if you want
