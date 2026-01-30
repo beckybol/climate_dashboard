@@ -18,9 +18,51 @@ df['Date'] = pd.to_datetime(df['Date'])
 df['Year'] = df['Date'].dt.year
 df['Month'] = df['Date'].dt.month
 
+MONTH_MAP = {
+    1: 'January', 2: 'February', 3: 'March', 4: 'April',
+    5: 'May', 6: 'June', 7: 'July', 8: 'August',
+    9: 'September', 10: 'October', 11: 'November', 12: 'December',
+    'annual': 'Annual'
+}
+
 # FIND THE LATEST DATE for the default map view
 latest_date = df['Date'].max()
-latest_month_name = latest_date.strftime('%B %Y')
+latest_month_name = MONTH_MAP[latest_date.month] + " " + str(latest_date.year)
+
+def format_title_months(month_list):
+    if not month_list:
+        return "Annual"
+    
+    # 1. Detect Winter Wrap-Around (Nov/Dec + Jan/Feb)
+    # Check if we have both late months (Nov/Dec) and early months (Jan/Feb)
+    has_late = any(m >= 11 for m in month_list)
+    has_early = any(m <= 2 for m in month_list)
+    
+    if has_late and has_early:
+        # Custom Sorting for Title: Put Nov(11) and Dec(12) BEFORE Jan(1)
+        # We treat 11 as -1 and 12 as 0 for sorting purposes
+        def winter_sort(m):
+            return m if m < 7 else m - 13
+            
+        m_sorted = sorted(month_list, key=winter_sort)
+        # Now [1, 11, 12] becomes [11, 12, 1]
+    else:
+        # Standard Sort
+        m_sorted = sorted(month_list)
+    
+    # Check if consecutive
+    # If [11, 12, 1], the winter_sort values are [-2, -1, 1]. 
+    # Not perfectly linear math, so simpler to just check if it looks like a range.
+    
+    first_name = MONTH_MAP[m_sorted[0]][:3] # "Nov"
+    last_name = MONTH_MAP[m_sorted[-1]][:3] # "Jan"
+    
+    # If we have more than 2 months and they span a range
+    if len(m_sorted) > 2:
+        return f"{first_name} - {last_name}"
+    
+    # Otherwise list them
+    return ", ".join([MONTH_MAP[m][:3] for m in m_sorted])
 
 # 3. Define the Layout using Rows and Columns
 app.layout = dbc.Container([
@@ -63,7 +105,6 @@ app.layout = dbc.Container([
                             {'label': 'November', 'value': 11}, {'label': 'December', 'value': 12}, 
                             {'label': 'Annual (All Months)', 'value': 'annual'}
                         ],
-                        value='annual',
                         multi=True,
                         placeholder="Select months..."
                     ),
@@ -110,26 +151,52 @@ app.layout = dbc.Container([
 
 # --- Helper Function for Aggregation ---
 def get_aggregated_data(df_subset, variable, selected_months):
-    """
-    Groups data by Year.
-    - If Precipitation: SUMs the months.
-    - If Temperature: AVERAGES the months.
-    """
     # 1. Filter by Month (if not Annual)
     if selected_months and 'annual' not in selected_months:
-        # If user selects specific months (e.g., [6, 7, 8])
-        # Ensure selected_months is a list of integers
         months_list = [m for m in selected_months if isinstance(m, int)]
+        
         if months_list:
-            df_subset = df_subset[df_subset['Month'].isin(months_list)]
-    
-    # 2. Define Aggregation Method based on Variable
-    # Assuming 'Precipitation' is the exact string in your CSV
+            # We must know how many months we EXPECT (e.g., 3 for Dec-Jan-Feb)
+            expected_count = len(months_list)
+            
+            df_subset = df_subset[df_subset['Month'].isin(months_list)].copy()
+            
+            # --- INTELLIGENT SEASON LOGIC ---
+            min_m = min(months_list)
+            max_m = max(months_list)
+            count = len(months_list)
+            
+            # Check Contiguity
+            is_continuous = (max_m - min_m) == (count - 1)
+            
+            # Apply Shift if NOT continuous (implies wrap-around like Dec-Jan)
+            if not is_continuous:
+                df_subset['Year'] = df_subset.apply(
+                    lambda x: x['Year'] + 1 if x['Month'] >= 7 else x['Year'], axis=1
+                )
+
+            # --- AGGREGATION WITH STRICT COUNTING ---
+            is_precip = 'Precipitation' in variable 
+            agg_func = 'sum' if is_precip else 'mean'
+            
+            # Group by Year/State and calculate BOTH the Value and the Count of months
+            df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable']).agg(
+                Value=('Value', agg_func),
+                Month_Count=('Month', 'count')
+            ).reset_index()
+            
+            # CRITICAL FILTER: Drop years that are missing months
+            # If we asked for 3 months, but 2026 only has 1 (Dec), drop 2026.
+            df_annual = df_annual[df_annual['Month_Count'] == expected_count]
+            
+            # Clean up (remove the count column)
+            return df_annual.drop(columns=['Month_Count'])
+
+    # Standard Annual Aggregation (No strict counting needed for simple annual)
+    # (Unless you want to enforce 12 months for annual too? Usually safe to leave as is)
     is_precip = 'Precipitation' in variable 
     agg_func = 'sum' if is_precip else 'mean'
     
-    # 3. Group by Year and Aggregate
-    # We group by ['Year', 'State_Code', 'Variable'] to keep those columns available
     df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable'])['Value'].agg(agg_func).reset_index()
     
     return df_annual
@@ -143,53 +210,52 @@ def get_aggregated_data(df_subset, variable, selected_months):
      Input('month-dropdown', 'value')]
 )
 def update_map(selected_variable, selected_months):
-    # LOGIC:
-    # 1. If "Annual" or nothing selected -> Show LATEST AVAILABLE MONTH (as requested)
-    # 2. If Specific Months selected -> Show the Aggregated Average/Sum for the LATEST YEAR in the dataset?
-    #    OR show the Long-Term Average for that season?
-    #    Standard practice for "Interactive Maps" is to show the *most recent* valid data point 
-    #    that matches the filter, or an average. 
-    #    Let's stick to your request: "Initial loading... latest month". 
-    
-    # Assign units based on variable
+    # 1. Determine Units
     if 'Precipitation' in selected_variable:
-        units = "inches"
+        units = 'Inches'
     else:
-        units = "°F"
-
-    # Default trigger: Use Latest Date
-    target_date = latest_date
-    map_title = f"{selected_variable} - {latest_month_name}"
-    status_msg = f"Showing data for {latest_month_name}."
+        units = '°F'
 
     # Filter Global Data
     dff = df[df['Variable'] == selected_variable]
 
     # Handling the "Map View"
-    # If the user is in "Annual" mode, we show the LATEST MONTH (December 2025)
-    if not selected_months or 'annual' in selected_months:
+    # CASE 1: ANNUAL Selected -> Show Aggregated Annual Data
+    if selected_months and 'annual' in selected_months:
+        # Calculate full annual averages/sums
+        dff_aggregated = get_aggregated_data(dff, selected_variable, ['annual'])
+        
+        # Find latest available year in the aggregated data
+        latest_agg_year = dff_aggregated['Year'].max()
+        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_agg_year]
+        
+        map_title = f"{selected_variable} - {latest_agg_year} Annual Average"
+        status_msg = f"Showing Annual Average for {latest_agg_year}."
+
+# CASE 2: EMPTY Selection -> Show Latest Available Month (Raw Data)
+    elif not selected_months:
         dff_map = dff[dff['Date'] == latest_date]
+        
+        map_title = f"{selected_variable} - {latest_month_name}"
+        status_msg = f"Showing latest data: {latest_month_name}."
     
     else:
-        # If user selects specific months (e.g. JJA), what should the map show?
-        # Option A: The JJA average for the LAST available year (2025).
-        # This matches the "Latest" philosophy.
+        # Complex Case: Seasonal Aggregation
+        # STEP 1: Aggregate the ENTIRE history first (allows the "Year Shift" to work)
+        dff_aggregated = get_aggregated_data(dff, selected_variable, selected_months)
         
-        # 1. Filter for selected months
-        months_list = [m for m in selected_months if isinstance(m, int)]
-        dff_season = dff[dff['Month'].isin(months_list)]
+        # STEP 2: Find the latest available "Season Year"
+        latest_season_year = dff_aggregated['Year'].max()
         
-        # 2. Get the latest year available in this filtered set
-        latest_year = dff_season['Year'].max()
+        # STEP 3: Filter the AGGREGATED data for that year
+        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_season_year]
         
-        # 3. Aggregate for that specific year
-        # (e.g. Average Temp for JJA 2025)
-        dff_map = get_aggregated_data(dff_season[dff_season['Year'] == latest_year], selected_variable, months_list)
+        # Title Formatting
+        # Use our helper to format [1, 11, 12] -> "Nov - Jan"
+        month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
         
-        # Update Titles
-        month_names = ", ".join([str(m) for m in months_list]) # You could map 1->Jan here if desired
-        map_title = f"{selected_variable} - {latest_year} (Months: {month_names})"
-        status_msg = f"Map showing aggregation for Year {latest_year}. Chart below shows trend."
+        map_title = f"{selected_variable} - {month_names_str} {latest_season_year}"
+        status_msg = f"Showing {month_names_str} average for Season {latest_season_year}."
 
     fig = px.choropleth(
         dff_map,
@@ -227,30 +293,33 @@ def update_chart(clickData, selected_variable, selected_months):
     # 2. Filter Master Data by State & Variable
     dff = df[(df['State_Code'] == state_code) & (df['Variable'] == selected_variable)]
     
-    # 3. Run Aggregation Logic (The "One Value Per Year" Rule)
-    # This function handles the Sum vs Mean logic and Month filtering
-    dff_aggregated = get_aggregated_data(dff, selected_variable, selected_months)
+# CASE 1: ANNUAL Selected -> Show Annual Trend
+    if selected_months and 'annual' in selected_months:
+        dff_plot = get_aggregated_data(dff, selected_variable, ['annual'])
+        title_text = f"{state_code} - {selected_variable} (Annual Trend)"
     
-    # 4. Generate Title
-    if not selected_months or 'annual' in selected_months:
-        subtitle = "Annual"
-        if 'Precipitation' in selected_variable:
-            subtitle += " Total"
-        else:
-            subtitle += " Average"
+    # CASE 2: EMPTY Selection -> Show "Latest Month" Trend (e.g. History of Decembers)
+    elif not selected_months:
+        # Filter for the month of the latest_date global variable
+        target_month = latest_date.month
+        target_month_name = latest_date.strftime('%B')
+        
+        dff_plot = dff[dff['Month'] == target_month].sort_values('Year')
+        title_text = f"{state_code} - {selected_variable} ({target_month_name} Trend)"
+
+ # CASE 3: SEASONAL Selection -> Show Seasonal Trend
     else:
-        subtitle = "Seasonal"
-        if 'Precipitation' in selected_variable:
-            subtitle += " Total"
-        else:
-            subtitle += " Average"
+        dff_plot = get_aggregated_data(dff, selected_variable, selected_months)
+        
+        month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
+        title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend)"
 
     # 5. Plot
     fig = px.line(
-        dff_aggregated, 
+        dff_plot, 
         x='Year', 
         y='Value', 
-        title=f"{state_code} - {selected_variable} ({subtitle})",
+        title=title_text,
         markers=True, # Adds dots to the line so you can see the individual yearly points
         labels={'Value': units, 'Year': 'Year'}
     )
