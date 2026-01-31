@@ -108,7 +108,31 @@ app.layout = dbc.Container([
                         multi=True,
                         placeholder="Select months..."
                     ),
-                    html.Small("Select specific months to see seasonal totals/averages.", className="text-muted")
+                    html.Small("Select specific months to see seasonal totals/averages.", className="text-muted"),
+
+                    html.Label("View Mode:", className="fw-bold mt-3"),
+                    dbc.RadioItems(
+                        id='view-mode',
+                        options=[
+                            {'label': 'Absolute Values', 'value': 'absolute'},
+                            {'label': 'Departure from Avg', 'value': 'anomaly'}
+                        ],
+                        value='absolute',
+                        inline=True,
+                        className="mb-3"
+                    ),
+
+                    html.Label("Baseline Period (for Departure):", className="fw-bold"),
+                    dbc.RadioItems(
+                        id='baseline-mode',
+                        options=[
+                            {'label': '20th Century (1901-2000)', 'value': 'century'},
+                            {'label': 'Climate Normals (1991-2020)', 'value': 'normal'}
+                        ],
+                        value='century', # Default per your request
+                        inline=False,
+                        className="mb-3"
+                    ),
                 ])
             ], className="shadow-sm mb-4"), # Adds a subtle shadow
     
@@ -150,7 +174,7 @@ app.layout = dbc.Container([
 # 4. Callbacks
 
 # --- Helper Function for Aggregation ---
-def get_aggregated_data(df_subset, variable, selected_months):
+def get_aggregated_data(df_subset, variable, selected_months, view_mode='absolute', baseline_mode='century'):
     # 1. Filter by Month (if not Annual)
     if selected_months and 'annual' not in selected_months:
         months_list = [m for m in selected_months if isinstance(m, int)]
@@ -187,18 +211,44 @@ def get_aggregated_data(df_subset, variable, selected_months):
             
             # CRITICAL FILTER: Drop years that are missing months
             # If we asked for 3 months, but 2026 only has 1 (Dec), drop 2026.
-            df_annual = df_annual[df_annual['Month_Count'] == expected_count]
-            
-            # Clean up (remove the count column)
-            return df_annual.drop(columns=['Month_Count'])
+            df_annual = df_annual[df_annual['Month_Count'] == expected_count].drop(columns=['Month_Count'])
 
-    # Standard Annual Aggregation (No strict counting needed for simple annual)
-    # (Unless you want to enforce 12 months for annual too? Usually safe to leave as is)
-    is_precip = 'Precipitation' in variable 
-    agg_func = 'sum' if is_precip else 'mean'
+    else:
+        # Standard Annual Aggregation (No strict counting needed for simple annual)
+        # (Unless you want to enforce 12 months for annual too? Usually safe to leave as is)
+        is_precip = 'Precipitation' in variable 
+        agg_func = 'sum' if is_precip else 'mean'
     
-    df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable'])['Value'].agg(agg_func).reset_index()
+        df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable'])['Value'].agg(agg_func).reset_index()
     
+    # --- NEW: ANOMALY CALCULATION ---
+    # Even if view_mode is 'absolute', we calculate these columns so they are available for Hover data
+    
+    # 1. Define Baseline Years
+    if baseline_mode == 'century':
+        start_year, end_year = 1901, 2000
+    else: # 'normal'
+        start_year, end_year = 1991, 2020
+        
+    # 2. Calculate LTA (Long Term Average) for each state
+    # Filter for baseline years -> Group by State -> Calculate Mean
+    baseline_df = df_annual[(df_annual['Year'] >= start_year) & (df_annual['Year'] <= end_year)]
+    lta_series = baseline_df.groupby('State_Code')['Value'].mean()
+
+    # 3. Map LTA back to the main dataframe
+    df_annual['LTA'] = df_annual['State_Code'].map(lta_series)
+    
+    # 4. Calculate Anomaly
+    df_annual['Anomaly'] = df_annual['Value'] - df_annual['LTA']
+    
+    # 5. Handle View Mode
+    # We save the "Absolute" value in a specific column for safe keeping
+    df_annual['Absolute_Value'] = df_annual['Value']
+    
+    if view_mode == 'anomaly':
+        # Swap 'Value' to be the Anomaly so the Map plots the anomaly automatically
+        df_annual['Value'] = df_annual['Anomaly']
+        
     return df_annual
 
 # --- Callback: Update Map ---
@@ -207,14 +257,20 @@ def get_aggregated_data(df_subset, variable, selected_months):
      Output('map-title', 'children'),
      Output('status-text', 'children')],
     [Input('variable-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
+     Input('month-dropdown', 'value'),
+     Input('view-mode', 'value'),
+     Input('baseline-mode', 'value')]
 )
-def update_map(selected_variable, selected_months):
+def update_map(selected_variable, selected_months, view_mode, baseline_mode):
     # 1. Determine Units
     if 'Precipitation' in selected_variable:
         units = 'Inches'
+        anomaly_colors = "BrBG"
     else:
         units = '°F'
+        anomaly_colors = "RdBu_r"
+
+    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
 
     # Filter Global Data
     dff = df[df['Variable'] == selected_variable]
@@ -223,26 +279,50 @@ def update_map(selected_variable, selected_months):
     # CASE 1: ANNUAL Selected -> Show Aggregated Annual Data
     if selected_months and 'annual' in selected_months:
         # Calculate full annual averages/sums
-        dff_aggregated = get_aggregated_data(dff, selected_variable, ['annual'])
+        dff_aggregated = get_aggregated_data(dff, selected_variable, ['annual'], view_mode, baseline_mode)
         
         # Find latest available year in the aggregated data
         latest_agg_year = dff_aggregated['Year'].max()
         dff_map = dff_aggregated[dff_aggregated['Year'] == latest_agg_year]
         
-        map_title = f"{selected_variable} - {latest_agg_year} Annual Average"
-        status_msg = f"Showing Annual Average for {latest_agg_year}."
+        # Define Titles    
+        if view_mode == 'anomaly':
+            map_title = f"{selected_variable} - {latest_agg_year} Annual Average (Departure from {baseline_text}) "
+            status_msg = f"Showing Annual Average (Departure from {baseline_text}) for {latest_agg_year}."
+            hover_units = f"Departure ({units})"
+        else:
+            map_title = f"{selected_variable} - {latest_agg_year} Annual Average"
+            status_msg = f"Showing Annual Average for {latest_agg_year}."
+            hover_units = units
 
-# CASE 2: EMPTY Selection -> Show Latest Available Month (Raw Data)
+    # CASE 2: EMPTY Selection -> Show Latest Available Month (Raw Data)
     elif not selected_months:
-        dff_map = dff[dff['Date'] == latest_date]
+        # 1. Identify the target month integer (e.g., 12 for December)
+        target_month = latest_date.month
         
-        map_title = f"{selected_variable} - {latest_month_name}"
-        status_msg = f"Showing latest data: {latest_month_name}."
-    
+        # 2. Call the Helper!
+        # We trick the helper into thinking the user clicked "December"
+        dff_aggregated = get_aggregated_data(dff, selected_variable, [target_month], view_mode, baseline_mode)
+        
+        # 3. Find the latest year (e.g. 2025)
+        latest_agg_year = dff_aggregated['Year'].max()
+        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_agg_year]    
+
+        # 4. Define Titles
+        baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
+        
+        if view_mode == 'anomaly':
+            map_title = f"{selected_variable} - {latest_month_name} (Departure from {baseline_text})"
+            status_msg = f"Showing {latest_month_name} departure from average."
+            hover_units = f"Departure ({units})"
+        else:
+            map_title = f"{selected_variable} - {latest_month_name}"
+            status_msg = f"Showing latest data: {latest_month_name}."
+            hover_units = units
     else:
         # Complex Case: Seasonal Aggregation
         # STEP 1: Aggregate the ENTIRE history first (allows the "Year Shift" to work)
-        dff_aggregated = get_aggregated_data(dff, selected_variable, selected_months)
+        dff_aggregated = get_aggregated_data(dff, selected_variable, selected_months, view_mode, baseline_mode)
         
         # STEP 2: Find the latest available "Season Year"
         latest_season_year = dff_aggregated['Year'].max()
@@ -254,8 +334,14 @@ def update_map(selected_variable, selected_months):
         # Use our helper to format [1, 11, 12] -> "Nov - Jan"
         month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
         
-        map_title = f"{selected_variable} - {month_names_str} {latest_season_year}"
-        status_msg = f"Showing {month_names_str} average for Season {latest_season_year}."
+        if view_mode == 'anomaly':
+            map_title = f"{selected_variable} - {month_names_str} {latest_season_year} (Departure from {baseline_text})"
+            status_msg = f"Showing departure from {baseline_text} average."
+            hover_units = f"Departure ({units})"
+        else:
+            map_title = f"{selected_variable} - {month_names_str} {latest_season_year}"
+            status_msg = f"Showing absolute values for {latest_season_year}."
+            hover_units = units
 
     fig = px.choropleth(
         dff_map,
@@ -263,9 +349,14 @@ def update_map(selected_variable, selected_months):
         locationmode="USA-states",
         color='Value',
         scope="usa",
-        color_continuous_scale="Viridis" if 'Precipitation' in selected_variable else "RdBu_r",
+        # Dynamic Color Scale
+        color_continuous_scale=anomaly_colors if view_mode == 'anomaly' else ("Viridis" if 'Precipitation' in selected_variable else "RdBu_r"),
+        # Force 0 to be the center (White) for anomalies
+        color_continuous_midpoint=0 if view_mode == 'anomaly' else None,
         hover_name="State_Code",
-        labels={'Value': units}
+        # Show extra data on hover!
+        hover_data={'LTA':':.2f', 'Absolute_Value':':.2f'},
+        labels={'Value': hover_units, 'LTA': 'Long Term Avg', 'Absolute_Value': 'Actual'}
     )
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     
@@ -276,9 +367,11 @@ def update_map(selected_variable, selected_months):
     Output('trend-chart', 'figure'),
     [Input('us-map', 'clickData'),
      Input('variable-dropdown', 'value'),
-     Input('month-dropdown', 'value')]
+     Input('month-dropdown', 'value'),
+     Input('view-mode', 'value'),
+     Input('baseline-mode', 'value')]
 )
-def update_chart(clickData, selected_variable, selected_months):
+def update_chart(clickData, selected_variable, selected_months, view_mode, baseline_mode):
     if 'Precipitation' in selected_variable:
         units = "Precipitation (inches)"
     else:
@@ -289,43 +382,78 @@ def update_chart(clickData, selected_variable, selected_months):
         state_code = 'CO' # Default
     else:
         state_code = clickData['points'][0]['location']
-        
+
+    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
+       
     # 2. Filter Master Data by State & Variable
     dff = df[(df['State_Code'] == state_code) & (df['Variable'] == selected_variable)]
     
 # CASE 1: ANNUAL Selected -> Show Annual Trend
     if selected_months and 'annual' in selected_months:
-        dff_plot = get_aggregated_data(dff, selected_variable, ['annual'])
-        title_text = f"{state_code} - {selected_variable} (Annual Trend)"
+        dff_plot = get_aggregated_data(dff, selected_variable, ['annual'], view_mode, baseline_mode)
+        
+        if view_mode == 'anomaly':
+            title_text = f"{state_code} - {selected_variable} (Annual Trend) - {baseline_text} (Departure)"
+            y_label = f"Departure ({units})"
+        else:
+            title_text = f"{state_code} - {selected_variable} (Annual Trend) - {baseline_text}"
+            y_label = units
+
     
     # CASE 2: EMPTY Selection -> Show "Latest Month" Trend (e.g. History of Decembers)
     elif not selected_months:
-        # Filter for the month of the latest_date global variable
+        # 1. Identify target month
         target_month = latest_date.month
         target_month_name = latest_date.strftime('%B')
         
-        dff_plot = dff[dff['Month'] == target_month].sort_values('Year')
-        title_text = f"{state_code} - {selected_variable} ({target_month_name} Trend)"
+        # 2. Call Helper
+        dff_plot = get_aggregated_data(dff, selected_variable, [target_month], view_mode, baseline_mode)
+        
+        # 3. Titles
+        if view_mode == 'anomaly':
+            title_text = f"{state_code} - {target_month_name} Departure from {baseline_text} Avg"
+            y_label = f"Departure ({units})"
+        else:
+            title_text = f"{state_code} - {selected_variable} ({target_month_name} Trend)"
+            y_label = units  
 
- # CASE 3: SEASONAL Selection -> Show Seasonal Trend
+    # CASE 3: SEASONAL Selection -> Show Seasonal Trend
     else:
-        dff_plot = get_aggregated_data(dff, selected_variable, selected_months)
+        dff_plot = get_aggregated_data(dff, selected_variable, selected_months, view_mode, baseline_mode)
         
         month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
-        title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend)"
+        
+        if view_mode == 'anomaly':
+            title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend) - {baseline_text} (Departure)"
+            y_label = f"Departure ({units})"
+        else:
+            title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend) - {baseline_text}"
+            y_label = units
 
     # 5. Plot
-    fig = px.line(
-        dff_plot, 
-        x='Year', 
-        y='Value', 
-        title=title_text,
-        markers=True, # Adds dots to the line so you can see the individual yearly points
-        labels={'Value': units, 'Year': 'Year'}
-    )
-    
-    # Optional: Add OLS Trendline if you want
-    # fig = px.scatter(..., trendline="ols", ...) 
+    # Use Bar chart for Anomalies (Visual Best Practice)
+    if view_mode == 'anomaly':
+        fig = px.bar(
+            dff_plot, 
+            x='Year', 
+            y='Value', 
+            title=title_text,
+            # Color bars red for positive, blue/brown for negative
+            color='Value',
+            color_continuous_scale="BrBG" if 'Precipitation' in selected_variable else "RdBu_r",
+            color_continuous_midpoint=0
+        )
+        # Add a horizontal line at 0
+        fig.add_hline(y=0, line_dash="dash", line_color="black")
+    else:
+        fig = px.line(
+            dff_plot, 
+            x='Year', 
+            y='Value', 
+            title=title_text,
+            markers=True
+        )
+    fig.update_yaxes(title_text=y_label)
     
     fig.update_layout(template="simple_white")
     return fig
