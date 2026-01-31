@@ -110,12 +110,13 @@ app.layout = dbc.Container([
                     ),
                     html.Small("Select specific months to see seasonal totals/averages.", className="text-muted"),
 
-                    html.Label("View Mode:", className="fw-bold mt-3"),
+                    html.Label("View Mode:", className="fw-bold mt-3 d-block"),
                     dbc.RadioItems(
                         id='view-mode',
                         options=[
                             {'label': 'Absolute Values', 'value': 'absolute'},
-                            {'label': 'Departure from Avg', 'value': 'anomaly'}
+                            {'label': 'Departure from Avg', 'value': 'anomaly'},
+                            {'label': 'Rankings', 'value': 'rank'}
                         ],
                         value='absolute',
                         inline=True,
@@ -172,6 +173,94 @@ app.layout = dbc.Container([
 ], fluid=True) # fluid=True uses the full width of the screen
 
 # 4. Callbacks
+
+# calculate data rankings
+def calculate_ncei_ranks(df, variable):
+    """
+    Adds 'Rank', 'Bin_ID', and 'Rank_Text' columns based on NCEI logic.
+    Rank 1 = Coldest/Driest. Rank N = Warmest/Wettest.
+    """
+    # We cannot rank a NaN value, so we remove rows where Value is missing.
+    df = df.dropna(subset=['Value']).copy()
+    
+    # 1. Calculate Rank (1 to N)
+    # method='min' means ties get the same lower rank (e.g. two 1sts)
+    df['Rank'] = df.groupby('State_Code')['Value'].rank(method='min', ascending=True)
+    
+    # 2. Get the Count (N) for each state to calculate percentiles
+    df['Count'] = df.groupby('State_Code')['Value'].transform('count')
+    
+    # 3. Define the Terms based on Variable
+    if 'Precipitation' in variable:
+        low_adj, high_adj = "Driest", "Wettest"
+    else:
+        low_adj, high_adj = "Coolest", "Warmest"
+
+    # 4. Define Helper for "1st", "2nd", "3rd"
+    def ordinal(n):
+        return "%d%s" % (n, {1:"st", 2:"nd", 3:"rd"}.get(n if n<20 else n%10, "th"))
+
+    def get_rank_properties(row):
+        rank = row['Rank']
+        n = row['Count']
+        
+        # Calculate Percentile (0.0 to 1.0)
+        pct = rank / n
+        
+        # --- NCEI BINNING LOGIC ---
+        # Bins: 0=RecLow, 1=MuchBelow, 2=Below, 3=Near, 4=Above, 5=MuchAbove, 6=RecHigh
+        
+        # RECORD LOW (Rank 1)
+        if rank == 1:
+            bin_id = 0
+            cat_text = f"Record {low_adj}"
+            rank_text = f"1st {low_adj}"
+            
+        # RECORD HIGH (Rank N)
+        elif rank == n:
+            bin_id = 6
+            cat_text = f"Record {high_adj}"
+            rank_text = f"1st {high_adj}" # "1st Warmest"
+            
+        # MUCH BELOW (Bottom 10%)
+        elif pct <= 0.10:
+            bin_id = 1
+            cat_text = "Much Below Average"
+            rank_text = f"{ordinal(int(rank))} {low_adj}"
+            
+        # BELOW (Bottom 33%)
+        elif pct <= 0.333:
+            bin_id = 2
+            cat_text = "Below Average"
+            rank_text = f"{ordinal(int(rank))} {low_adj}"
+            
+        # NEAR AVERAGE (Middle 33%)
+        elif pct <= 0.666:
+            bin_id = 3
+            cat_text = "Near Average"
+            # For near average, we still label it based on which side of the median it is
+            if pct <= 0.5:
+                rank_text = f"{ordinal(int(rank))} {low_adj}"
+            else:
+                rank_text = f"{ordinal(int(n - rank + 1))} {high_adj}"
+
+        # ABOVE (Top 33%)
+        elif pct <= 0.90:
+            bin_id = 4
+            cat_text = "Above Average"
+            rank_text = f"{ordinal(int(n - rank + 1))} {high_adj}"
+            
+        # MUCH ABOVE (Top 10%)
+        else:
+            bin_id = 5
+            cat_text = "Much Above Average"
+            rank_text = f"{ordinal(int(n - rank + 1))} {high_adj}"
+            
+        return pd.Series([bin_id, cat_text, rank_text])
+
+    # Apply the logic row-by-row
+    df[['Bin_ID', 'Category', 'Rank_Label']] = df.apply(get_rank_properties, axis=1)
+    return df
 
 # --- Helper Function for Aggregation ---
 def get_aggregated_data(df_subset, variable, selected_months, view_mode='absolute', baseline_mode='century'):
@@ -248,7 +337,13 @@ def get_aggregated_data(df_subset, variable, selected_months, view_mode='absolut
     if view_mode == 'anomaly':
         # Swap 'Value' to be the Anomaly so the Map plots the anomaly automatically
         df_annual['Value'] = df_annual['Anomaly']
-        
+
+    elif view_mode == 'rank':
+        # If Ranking, we calculate the ranks and populate metadata
+        df_annual = calculate_ncei_ranks(df_annual, variable)
+        # Note: We keep 'Value' as the Absolute Value for the CHART, 
+        # but the MAP will use 'Bin_ID' for coloring.
+
     return df_annual
 
 # --- Callback: Update Map ---
@@ -262,102 +357,107 @@ def get_aggregated_data(df_subset, variable, selected_months, view_mode='absolut
      Input('baseline-mode', 'value')]
 )
 def update_map(selected_variable, selected_months, view_mode, baseline_mode):
-    # 1. Determine Units
+    # --- PHASE 1: SETUP & UNITS ---
     if 'Precipitation' in selected_variable:
         units = 'Inches'
-        anomaly_colors = "BrBG"
+        standard_colors = "Viridis"
+        anomaly_colors = "BrBG"  # Brown(Dry) -> Green(Wet)
+        # NCEI Precipitation Colors (Record Dry -> Record Wet)
+        rank_colors = ["#543005", "#8C510A", "#BF812D", "#F7F7F7", "#80CDC1", "#35978F", "#003C30"]
     else:
         units = '°F'
+        standard_colors = "RdBu_r" # Blue(Cold) -> Red(Hot)
         anomaly_colors = "RdBu_r"
+        # NCEI Temperature Colors (Record Cold -> Record Warm)
+        rank_colors = ["#053061", "#2166AC", "#4393C3", "#F7F7F7", "#F4A582", "#D6604D", "#67001F"]
 
-    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
-
-    # Filter Global Data
+    # Filter Global Data by Variable first
     dff = df[df['Variable'] == selected_variable]
 
-    # Handling the "Map View"
-    # CASE 1: ANNUAL Selected -> Show Aggregated Annual Data
+    # --- PHASE 2: DETERMINE TIME SELECTION ---
     if selected_months and 'annual' in selected_months:
-        # Calculate full annual averages/sums
-        dff_aggregated = get_aggregated_data(dff, selected_variable, ['annual'], view_mode, baseline_mode)
+        target_months = ['annual']
+        time_label = "Annual"
         
-        # Find latest available year in the aggregated data
-        latest_agg_year = dff_aggregated['Year'].max()
-        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_agg_year]
-        
-        # Define Titles    
-        if view_mode == 'anomaly':
-            map_title = f"{selected_variable} - {latest_agg_year} Annual Average (Departure from {baseline_text}) "
-            status_msg = f"Showing Annual Average (Departure from {baseline_text}) for {latest_agg_year}."
-            hover_units = f"Departure ({units})"
-        else:
-            map_title = f"{selected_variable} - {latest_agg_year} Annual Average"
-            status_msg = f"Showing Annual Average for {latest_agg_year}."
-            hover_units = units
-
-    # CASE 2: EMPTY Selection -> Show Latest Available Month (Raw Data)
     elif not selected_months:
-        # 1. Identify the target month integer (e.g., 12 for December)
-        target_month = latest_date.month
+        target_months = [latest_date.month]
+        # FIX: Force just the month name (e.g. "December") to avoid double years
+        time_label = latest_date.strftime('%B') 
         
-        # 2. Call the Helper!
-        # We trick the helper into thinking the user clicked "December"
-        dff_aggregated = get_aggregated_data(dff, selected_variable, [target_month], view_mode, baseline_mode)
-        
-        # 3. Find the latest year (e.g. 2025)
-        latest_agg_year = dff_aggregated['Year'].max()
-        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_agg_year]    
-
-        # 4. Define Titles
-        baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
-        
-        if view_mode == 'anomaly':
-            map_title = f"{selected_variable} - {latest_month_name} (Departure from {baseline_text})"
-            status_msg = f"Showing {latest_month_name} departure from average."
-            hover_units = f"Departure ({units})"
-        else:
-            map_title = f"{selected_variable} - {latest_month_name}"
-            status_msg = f"Showing latest data: {latest_month_name}."
-            hover_units = units
     else:
-        # Complex Case: Seasonal Aggregation
-        # STEP 1: Aggregate the ENTIRE history first (allows the "Year Shift" to work)
-        dff_aggregated = get_aggregated_data(dff, selected_variable, selected_months, view_mode, baseline_mode)
+        target_months = [m for m in selected_months if isinstance(m, int)]
+        time_label = format_title_months(target_months)
         
-        # STEP 2: Find the latest available "Season Year"
-        latest_season_year = dff_aggregated['Year'].max()
-        
-        # STEP 3: Filter the AGGREGATED data for that year
-        dff_map = dff_aggregated[dff_aggregated['Year'] == latest_season_year]
-        
-        # Title Formatting
-        # Use our helper to format [1, 11, 12] -> "Nov - Jan"
-        month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
-        
-        if view_mode == 'anomaly':
-            map_title = f"{selected_variable} - {month_names_str} {latest_season_year} (Departure from {baseline_text})"
-            status_msg = f"Showing departure from {baseline_text} average."
-            hover_units = f"Departure ({units})"
-        else:
-            map_title = f"{selected_variable} - {month_names_str} {latest_season_year}"
-            status_msg = f"Showing absolute values for {latest_season_year}."
-            hover_units = units
+    # --- PHASE 3: GET AGGREGATED DATA ---
+    # Now we make just ONE call to the helper function
+    dff_aggregated = get_aggregated_data(dff, selected_variable, target_months, view_mode, baseline_mode)
+    
+    # Get the single latest year for the map
+    latest_year = dff_aggregated['Year'].max()
+    dff_map = dff_aggregated[dff_aggregated['Year'] == latest_year]
 
+    # --- PHASE 4: CONFIGURE VIEW MODE (Visuals) ---
+    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
+    
+    # OPTION 1: RANKINGS
+    if view_mode == 'rank':
+        color_col = 'Bin_ID'       # 0-6 bins
+        colorscale = rank_colors   # Specific NCEI Hex codes
+        range_color = [0, 6]       # Force distinct bins
+        midpoint = None
+        
+        map_title = f"{selected_variable} - {time_label} {latest_year} (Rankings)"
+        status_msg = f"Showing rankings for {time_label} {latest_year}."
+        
+        # Hover shows Category ("Much Above Average") and Rank ("3rd Driest")
+        hover_data = {'Category': True, 'Rank_Label': True, 'Absolute_Value': ':.2f'}
+        labels_map = {'Category': 'Class', 'Rank_Label': 'Rank', 'Absolute_Value': 'Value'}
+        
+    # OPTION 2: DEPARTURE (ANOMALY)
+    elif view_mode == 'anomaly':
+        color_col = 'Value'        # This column now holds the Anomaly (calculated in helper)
+        colorscale = anomaly_colors
+        range_color = None
+        midpoint = 0               # Force White to be 0
+        
+        map_title = f"{selected_variable} - {time_label} {latest_year} (Departure from {baseline_text})"
+        status_msg = f"Showing departure from {baseline_text} average."
+        
+        hover_data = {'LTA': ':.2f', 'Absolute_Value': ':.2f'}
+        labels_map = {'Value': f'Departure ({units})', 'LTA': 'Long Term Avg', 'Absolute_Value': 'Actual'}
+        
+    # OPTION 3: ABSOLUTE (STANDARD)
+    else:
+        color_col = 'Value'        # This column holds the standard value
+        colorscale = standard_colors
+        range_color = None
+        midpoint = None
+        
+        map_title = f"{selected_variable} - {time_label} {latest_year}"
+        status_msg = f"Showing absolute values for {time_label} {latest_year}."
+        
+        hover_data = {'LTA': ':.2f'}
+        labels_map = {'Value': units, 'LTA': 'Long Term Avg'}
+
+    # --- PHASE 5: DRAW MAP ---
     fig = px.choropleth(
         dff_map,
         locations='State_Code',
         locationmode="USA-states",
-        color='Value',
+        color=color_col,
         scope="usa",
-        # Dynamic Color Scale
-        color_continuous_scale=anomaly_colors if view_mode == 'anomaly' else ("Viridis" if 'Precipitation' in selected_variable else "RdBu_r"),
-        # Force 0 to be the center (White) for anomalies
-        color_continuous_midpoint=0 if view_mode == 'anomaly' else None,
+        color_continuous_scale=colorscale,
+        range_color=range_color,
+        color_continuous_midpoint=midpoint,
         hover_name="State_Code",
-        # Show extra data on hover!
-        hover_data={'LTA':':.2f', 'Absolute_Value':':.2f'},
-        labels={'Value': hover_units, 'LTA': 'Long Term Avg', 'Absolute_Value': 'Actual'}
+        hover_data=hover_data,
+        labels=labels_map
     )
+
+    # Hide the legend for rankings (optional, cleaner look)
+    if view_mode == 'rank':
+        fig.update_layout(coloraxis_showscale=False)
+        
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     
     return fig, map_title, status_msg
@@ -372,90 +472,126 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
      Input('baseline-mode', 'value')]
 )
 def update_chart(clickData, selected_variable, selected_months, view_mode, baseline_mode):
+    # --- PHASE 1: SETUP & UNITS ---
     if 'Precipitation' in selected_variable:
-        units = "Precipitation (inches)"
+        units = 'Inches'
+        anomaly_colors = "BrBG"
+        # NCEI Precipitation Colors
+        rank_colors = ["#543005", "#8C510A", "#BF812D", "#F7F7F7", "#80CDC1", "#35978F", "#003C30"]
     else:
-        units = "Temperature (°F)"
+        units = '°F'
+        anomaly_colors = "RdBu_r"
+        # NCEI Temperature Colors
+        rank_colors = ["#053061", "#2166AC", "#4393C3", "#F7F7F7", "#F4A582", "#D6604D", "#67001F"]
 
-    # 1. Determine State
+    # Determine State
     if clickData is None:
-        state_code = 'CO' # Default
+        state_code = 'CO'
     else:
         state_code = clickData['points'][0]['location']
-
-    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
-       
-    # 2. Filter Master Data by State & Variable
+        
     dff = df[(df['State_Code'] == state_code) & (df['Variable'] == selected_variable)]
-    
-# CASE 1: ANNUAL Selected -> Show Annual Trend
+
+    # --- PHASE 2: TIME SELECTION ---
     if selected_months and 'annual' in selected_months:
-        dff_plot = get_aggregated_data(dff, selected_variable, ['annual'], view_mode, baseline_mode)
-        
-        if view_mode == 'anomaly':
-            title_text = f"{state_code} - {selected_variable} (Annual Trend) - {baseline_text} (Departure)"
-            y_label = f"Departure ({units})"
-        else:
-            title_text = f"{state_code} - {selected_variable} (Annual Trend) - {baseline_text}"
-            y_label = units
-
-    
-    # CASE 2: EMPTY Selection -> Show "Latest Month" Trend (e.g. History of Decembers)
+        target_months = ['annual']
+        time_label = "Annual"
     elif not selected_months:
-        # 1. Identify target month
-        target_month = latest_date.month
-        target_month_name = latest_date.strftime('%B')
-        
-        # 2. Call Helper
-        dff_plot = get_aggregated_data(dff, selected_variable, [target_month], view_mode, baseline_mode)
-        
-        # 3. Titles
-        if view_mode == 'anomaly':
-            title_text = f"{state_code} - {target_month_name} Departure from {baseline_text} Avg"
-            y_label = f"Departure ({units})"
-        else:
-            title_text = f"{state_code} - {selected_variable} ({target_month_name} Trend)"
-            y_label = units  
-
-    # CASE 3: SEASONAL Selection -> Show Seasonal Trend
+        target_months = [latest_date.month]
+        time_label = latest_date.strftime('%B') # Fix: Just Month Name
     else:
-        dff_plot = get_aggregated_data(dff, selected_variable, selected_months, view_mode, baseline_mode)
-        
-        month_names_str = format_title_months([m for m in selected_months if isinstance(m, int)])
-        
-        if view_mode == 'anomaly':
-            title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend) - {baseline_text} (Departure)"
-            y_label = f"Departure ({units})"
-        else:
-            title_text = f"{state_code} - {selected_variable} ({month_names_str} Trend) - {baseline_text}"
-            y_label = units
+        target_months = [m for m in selected_months if isinstance(m, int)]
+        time_label = format_title_months(target_months)
 
-    # 5. Plot
-    # Use Bar chart for Anomalies (Visual Best Practice)
-    if view_mode == 'anomaly':
+    # --- PHASE 3: AGGREGATION ---
+    dff_plot = get_aggregated_data(dff, selected_variable, target_months, view_mode, baseline_mode)
+
+    # --- PHASE 4: CONFIGURE CHART ---
+    baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
+    
+    # OPTION 1: RANKINGS (Now a Bar Chart!)
+    if view_mode == 'rank':
+        chart_type = 'bar'
+        y_col = 'Absolute_Value' 
+        y_label = units
+        
+        # We color by Bin_ID to match the map (Dark Red/Blue bars for extreme years)
+        color_col = 'Bin_ID'
+        colorscale = rank_colors
+        range_color = [0, 6]
+        midpoint = None
+        
+        title_text = f"{state_code} - {selected_variable} History (Rankings)"
+        hover_template = f"<b>Year:</b> %{{x}}<br><b>Value:</b> %{{y}} {units}<br><b>Rank:</b> %{{customdata[2]}}"
+    
+    # OPTION 2: DEPARTURE (ANOMALY)
+    elif view_mode == 'anomaly':
+        chart_type = 'bar'
+        y_col = 'Value' # Anomaly
+        y_label = f"Anomaly ({units})"
+        
+        color_col = 'Value'
+        colorscale = anomaly_colors
+        range_color = None
+        midpoint = 0
+        
+        title_text = f"{state_code} - {time_label} Departure from {baseline_text} Average"
+        hover_template = f"<b>Year:</b> %{{x}}<br><b>Anomaly:</b> %{{y}} {units}"
+        
+    # OPTION 3: ABSOLUTE (STANDARD)
+    else:
+        chart_type = 'line'
+        y_col = 'Value'
+        y_label = units
+        color_col = None # Single color line
+        
+        title_text = f"{state_code} - {selected_variable} Trend ({time_label})"
+        hover_template = f"<b>Year:</b> %{{x}}<br><b>Value:</b> %{{y}} {units}"
+
+    # --- PHASE 5: DRAW CHART ---
+    if chart_type == 'bar':
         fig = px.bar(
             dff_plot, 
             x='Year', 
-            y='Value', 
+            y=y_col, 
             title=title_text,
-            # Color bars red for positive, blue/brown for negative
-            color='Value',
-            color_continuous_scale="BrBG" if 'Precipitation' in selected_variable else "RdBu_r",
-            color_continuous_midpoint=0
+            color=color_col, 
+            color_continuous_scale=colorscale,
+            range_color=range_color,
+            color_continuous_midpoint=midpoint,
+            labels={'Value': y_label, 'Year': ''}
         )
-        # Add a horizontal line at 0
-        fig.add_hline(y=0, line_dash="dash", line_color="black")
-    else:
+        
+        # If Ranking, we need to pass the custom text for hover
+        if view_mode == 'rank':
+             fig.update_traces(customdata=dff_plot[['Bin_ID', 'Category', 'Rank_Label']])
+             fig.update_traces(hovertemplate=hover_template)
+             # Hide the color bar for rankings (0-6 is confusing on a chart legend)
+             fig.update_layout(coloraxis_showscale=False)
+        else:
+            # For Anomalies, we SHOW the legend (color bar)
+            fig.update_layout(coloraxis_showscale=True)
+            
+        # Add baseline 0 line
+        if view_mode == 'anomaly':
+            fig.add_hline(y=0, line_width=2, line_color="black")
+            
+    else: # Line Chart (Standard View)
         fig = px.line(
             dff_plot, 
             x='Year', 
-            y='Value', 
+            y=y_col, 
             title=title_text,
-            markers=True
+            markers=True,
+            labels={'Value': y_label, 'Year': ''}
         )
-    fig.update_yaxes(title_text=y_label)
+
+    fig.update_layout(
+        template="simple_white",
+        margin=dict(l=40, r=40, t=40, b=40),
+        yaxis_title=y_label
+    )
     
-    fig.update_layout(template="simple_white")
     return fig
 
 if __name__ == '__main__':
