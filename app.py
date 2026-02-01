@@ -25,6 +25,20 @@ MONTH_MAP = {
     'annual': 'Annual'
 }
 
+STATE_MAPPING = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+    'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+    'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+    'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+    'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+    'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+    'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+    'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+    'DC': 'District of Columbia'
+}
+
 # FIND THE LATEST DATE for the default map view
 latest_date = df['Date'].max()
 latest_month_name = MONTH_MAP[latest_date.month] + " " + str(latest_date.year)
@@ -267,82 +281,66 @@ def get_aggregated_data(df_subset, variable, selected_months, view_mode='absolut
     # 1. Filter by Month (if not Annual)
     if selected_months and 'annual' not in selected_months:
         months_list = [m for m in selected_months if isinstance(m, int)]
-        
         if months_list:
-            # We must know how many months we EXPECT (e.g., 3 for Dec-Jan-Feb)
             expected_count = len(months_list)
-            
             df_subset = df_subset[df_subset['Month'].isin(months_list)].copy()
             
-            # --- INTELLIGENT SEASON LOGIC ---
+            # Season Shift Logic
             min_m = min(months_list)
             max_m = max(months_list)
             count = len(months_list)
-            
-            # Check Contiguity
             is_continuous = (max_m - min_m) == (count - 1)
-            
-            # Apply Shift if NOT continuous (implies wrap-around like Dec-Jan)
             if not is_continuous:
                 df_subset['Year'] = df_subset.apply(
                     lambda x: x['Year'] + 1 if x['Month'] >= 7 else x['Year'], axis=1
                 )
-
-            # --- AGGREGATION WITH STRICT COUNTING ---
+                
+            # Strict Counting Aggregation
             is_precip = 'Precipitation' in variable 
             agg_func = 'sum' if is_precip else 'mean'
             
-            # Group by Year/State and calculate BOTH the Value and the Count of months
             df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable']).agg(
                 Value=('Value', agg_func),
                 Month_Count=('Month', 'count')
             ).reset_index()
             
-            # CRITICAL FILTER: Drop years that are missing months
-            # If we asked for 3 months, but 2026 only has 1 (Dec), drop 2026.
             df_annual = df_annual[df_annual['Month_Count'] == expected_count].drop(columns=['Month_Count'])
 
     else:
-        # Standard Annual Aggregation (No strict counting needed for simple annual)
-        # (Unless you want to enforce 12 months for annual too? Usually safe to leave as is)
+        # Annual Aggregation
         is_precip = 'Precipitation' in variable 
         agg_func = 'sum' if is_precip else 'mean'
-    
         df_annual = df_subset.groupby(['Year', 'State_Code', 'Variable'])['Value'].agg(agg_func).reset_index()
-    
-    # --- NEW: ANOMALY CALCULATION ---
-    # Even if view_mode is 'absolute', we calculate these columns so they are available for Hover data
-    
-    # 1. Define Baseline Years
+
+    # --- 1. CALCULATE ANOMALIES (ALWAYS) ---
     if baseline_mode == 'century':
         start_year, end_year = 1901, 2000
-    else: # 'normal'
+    else: 
         start_year, end_year = 1991, 2020
-        
-    # 2. Calculate LTA (Long Term Average) for each state
-    # Filter for baseline years -> Group by State -> Calculate Mean
+    
     baseline_df = df_annual[(df_annual['Year'] >= start_year) & (df_annual['Year'] <= end_year)]
     lta_series = baseline_df.groupby('State_Code')['Value'].mean()
-
-    # 3. Map LTA back to the main dataframe
+    
     df_annual['LTA'] = df_annual['State_Code'].map(lta_series)
-    
-    # 4. Calculate Anomaly
     df_annual['Anomaly'] = df_annual['Value'] - df_annual['LTA']
+    df_annual['Absolute_Value'] = df_annual['Value'] # Backup the real number
     
-    # 5. Handle View Mode
-    # We save the "Absolute" value in a specific column for safe keeping
-    df_annual['Absolute_Value'] = df_annual['Value']
+    # --- 2. CALCULATE RANKS (ALWAYS) ---
+    # We pass the dataframe which currently has Absolute Values in 'Value'
+    # This adds 'Rank', 'Bin_ID', 'Category', 'Rank_Label' to every row
+    df_annual = calculate_ncei_ranks(df_annual, variable)
+    
+    # --- 3. HANDLE VIEW MODE SWAPS ---
+    # Now that Ranks and Anomalies are calculated safely using the Absolute numbers,
+    # we can swap the main 'Value' column if the Map needs it for coloring.
     
     if view_mode == 'anomaly':
-        # Swap 'Value' to be the Anomaly so the Map plots the anomaly automatically
         df_annual['Value'] = df_annual['Anomaly']
+        
+    # Note: For 'rank' and 'absolute' modes, we keep 'Value' as the Absolute Value.
+    # (The Rank Map uses 'Bin_ID' for color, but the Chart still wants Absolute Values).
 
-    elif view_mode == 'rank':
-        # If Ranking, we calculate the ranks and populate metadata
-        df_annual = calculate_ncei_ranks(df_annual, variable)
-        # Note: We keep 'Value' as the Absolute Value for the CHART, 
-        # but the MAP will use 'Bin_ID' for coloring.
+    df_annual['State_Name'] = df_annual['State_Code'].map(STATE_MAPPING)
 
     return df_annual
 
@@ -396,8 +394,15 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
     latest_year = dff_aggregated['Year'].max()
     dff_map = dff_aggregated[dff_aggregated['Year'] == latest_year]
 
+    dff_map['Anomaly_Label'] = dff_map['Anomaly'].apply(lambda x: f"{x:+.2f} {units}")
+    dff_map['Absolute_Label'] = dff_map['Absolute_Value'].apply(lambda x: f"{x:.2f} {units}")
+
     # --- PHASE 4: CONFIGURE VIEW MODE (Visuals) ---
     baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
+
+    hover_data = {'Absolute_Label': True, 'Anomaly_Label': True, 'Rank_Label': True, 
+                  'State_Code': False, 'Value': False, 'Bin_ID': False}  # Default hover data
+    labels_map = {'Absolute_Label': selected_variable, 'Anomaly_Label': 'Anomaly', 'Rank_Label': 'Rank'}  # Default labels map
     
     # OPTION 1: RANKINGS
     if view_mode == 'rank':
@@ -410,8 +415,8 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
         status_msg = f"Showing rankings for {time_label} {latest_year}."
         
         # Hover shows Category ("Much Above Average") and Rank ("3rd Driest")
-        hover_data = {'Category': True, 'Rank_Label': True, 'Absolute_Value': ':.2f'}
-        labels_map = {'Category': 'Class', 'Rank_Label': 'Rank', 'Absolute_Value': 'Value'}
+        #hover_data = {'Category': True, 'Rank_Label': True, 'Absolute_Value': ':.2f'}
+        #labels_map = {'Category': 'Class', 'Rank_Label': 'Rank', 'Absolute_Value': 'Value'}
         
     # OPTION 2: DEPARTURE (ANOMALY)
     elif view_mode == 'anomaly':
@@ -423,8 +428,8 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
         map_title = f"{selected_variable} - {time_label} {latest_year} (Departure from {baseline_text})"
         status_msg = f"Showing departure from {baseline_text} average."
         
-        hover_data = {'LTA': ':.2f', 'Absolute_Value': ':.2f'}
-        labels_map = {'Value': f'Departure ({units})', 'LTA': 'Long Term Avg', 'Absolute_Value': 'Actual'}
+        #hover_data = {'LTA': ':.2f', 'Absolute_Value': ':.2f'}
+        #labels_map = {'Value': f'Departure ({units})', 'LTA': 'Long Term Avg', 'Absolute_Value': 'Actual'}
         
     # OPTION 3: ABSOLUTE (STANDARD)
     else:
@@ -436,8 +441,8 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
         map_title = f"{selected_variable} - {time_label} {latest_year}"
         status_msg = f"Showing absolute values for {time_label} {latest_year}."
         
-        hover_data = {'LTA': ':.2f'}
-        labels_map = {'Value': units, 'LTA': 'Long Term Avg'}
+        #hover_data = {'LTA': ':.2f'}
+        #labels_map = {'Value': units, 'LTA': 'Long Term Avg'}
 
     # --- PHASE 5: DRAW MAP ---
     fig = px.choropleth(
@@ -449,7 +454,7 @@ def update_map(selected_variable, selected_months, view_mode, baseline_mode):
         color_continuous_scale=colorscale,
         range_color=range_color,
         color_continuous_midpoint=midpoint,
-        hover_name="State_Code",
+        hover_name="State_Name",
         hover_data=hover_data,
         labels=labels_map
     )
@@ -489,7 +494,9 @@ def update_chart(clickData, selected_variable, selected_months, view_mode, basel
         state_code = 'CO'
     else:
         state_code = clickData['points'][0]['location']
-        
+
+    state_name = STATE_MAPPING.get(state_code, state_code)
+
     dff = df[(df['State_Code'] == state_code) & (df['Variable'] == selected_variable)]
 
     # --- PHASE 2: TIME SELECTION ---
@@ -498,7 +505,7 @@ def update_chart(clickData, selected_variable, selected_months, view_mode, basel
         time_label = "Annual"
     elif not selected_months:
         target_months = [latest_date.month]
-        time_label = latest_date.strftime('%B') # Fix: Just Month Name
+        time_label = latest_date.strftime('%B')
     else:
         target_months = [m for m in selected_months if isinstance(m, int)]
         time_label = format_title_months(target_months)
@@ -506,47 +513,72 @@ def update_chart(clickData, selected_variable, selected_months, view_mode, basel
     # --- PHASE 3: AGGREGATION ---
     dff_plot = get_aggregated_data(dff, selected_variable, target_months, view_mode, baseline_mode)
 
-    # --- PHASE 4: CONFIGURE CHART ---
+# --- PHASE 4: CONFIGURE CHART & TOOLTIPS ---
     baseline_text = "1901-2000" if baseline_mode == 'century' else "1991-2020"
     
-    # OPTION 1: RANKINGS (Now a Bar Chart!)
+    # 1. OPTION: RANKINGS
     if view_mode == 'rank':
         chart_type = 'bar'
         y_col = 'Absolute_Value' 
         y_label = units
-        
-        # We color by Bin_ID to match the map (Dark Red/Blue bars for extreme years)
         color_col = 'Bin_ID'
         colorscale = rank_colors
         range_color = [0, 6]
         midpoint = None
+        title_text = f"{state_name} - {selected_variable} History (Rankings)"
         
-        title_text = f"{state_code} - {selected_variable} History (Rankings)"
-        hover_template = f"<b>Year:</b> %{{x}}<br><b>Value:</b> %{{y}} {units}<br><b>Rank:</b> %{{customdata[2]}}"
+        # We need Bin_ID, Category, Rank_Label AND Absolute_Value for the tooltip
+        # We add a formatted column for the value
+        dff_plot['Formatted_Value'] = dff_plot['Absolute_Value'].apply(lambda x: f"{x:.2f}")
+        custom_data_cols = ['Bin_ID', 'Category', 'Rank_Label', 'Formatted_Value']
+        
+        # Reference customdata[3] for the formatted value
+        hover_template = (
+            "<b>Year:</b> %{x}<br>"
+            f"<b>Value:</b> %{{customdata[3]}} {units}<br>"
+            "<b>Rank:</b> %{customdata[2]}"
+            "<extra></extra>"
+        )
     
-    # OPTION 2: DEPARTURE (ANOMALY)
+    # 2. OPTION: ANOMALY
     elif view_mode == 'anomaly':
         chart_type = 'bar'
         y_col = 'Value' # Anomaly
         y_label = f"Anomaly ({units})"
-        
         color_col = 'Value'
         colorscale = anomaly_colors
         range_color = None
         midpoint = 0
+        title_text = f"{state_name} - {time_label} Departure from {baseline_text} Average"
         
-        title_text = f"{state_code} - {time_label} Departure from {baseline_text} Average"
-        hover_template = f"<b>Year:</b> %{{x}}<br><b>Anomaly:</b> %{{y}} {units}"
+        # PYTHON FORMATTING: Force the + sign here
+        dff_plot['Formatted_Anomaly'] = dff_plot['Value'].apply(lambda x: f"{x:+.2f}")
+        custom_data_cols = ['Formatted_Anomaly']
         
-    # OPTION 3: ABSOLUTE (STANDARD)
+        # Reference customdata[0]
+        hover_template = (
+            "<b>Year:</b> %{x}<br>"
+            f"<b>Anomaly:</b> %{{customdata[0]}} {units}"
+            "<extra></extra>"
+        )
+        
+    # 3. OPTION: ABSOLUTE (Standard)
     else:
         chart_type = 'line'
         y_col = 'Value'
         y_label = units
-        color_col = None # Single color line
+        color_col = None 
+        title_text = f"{state_name} - {selected_variable} Trend ({time_label})"
         
-        title_text = f"{state_code} - {selected_variable} Trend ({time_label})"
-        hover_template = f"<b>Year:</b> %{{x}}<br><b>Value:</b> %{{y}} {units}"
+        # Standard formatting
+        dff_plot['Formatted_Value'] = dff_plot['Value'].apply(lambda x: f"{x:.2f}")
+        custom_data_cols = ['Formatted_Value']
+        
+        hover_template = (
+            "<b>Year:</b> %{x}<br>"
+            f"<b>Value:</b> %{{customdata[0]}} {units}"
+            "<extra></extra>"
+        )
 
     # --- PHASE 5: DRAW CHART ---
     if chart_type == 'bar':
@@ -559,32 +591,31 @@ def update_chart(clickData, selected_variable, selected_months, view_mode, basel
             color_continuous_scale=colorscale,
             range_color=range_color,
             color_continuous_midpoint=midpoint,
-            labels={'Value': y_label, 'Year': ''}
+            labels={'Value': y_label, 'Year': ''},
+            # PASS THE CUSTOM DATA COLUMNS HERE
+            custom_data=custom_data_cols 
         )
         
-        # If Ranking, we need to pass the custom text for hover
         if view_mode == 'rank':
-             fig.update_traces(customdata=dff_plot[['Bin_ID', 'Category', 'Rank_Label']])
-             fig.update_traces(hovertemplate=hover_template)
-             # Hide the color bar for rankings (0-6 is confusing on a chart legend)
              fig.update_layout(coloraxis_showscale=False)
         else:
-            # For Anomalies, we SHOW the legend (color bar)
             fig.update_layout(coloraxis_showscale=True)
-            
-        # Add baseline 0 line
-        if view_mode == 'anomaly':
             fig.add_hline(y=0, line_width=2, line_color="black")
             
-    else: # Line Chart (Standard View)
+    else: # Line Chart
         fig = px.line(
             dff_plot, 
             x='Year', 
             y=y_col, 
             title=title_text,
             markers=True,
-            labels={'Value': y_label, 'Year': ''}
+            labels={'Value': y_label, 'Year': ''},
+            # PASS THE CUSTOM DATA COLUMNS HERE
+            custom_data=custom_data_cols
         )
+
+    # Apply template
+    fig.update_traces(hovertemplate=hover_template)
 
     fig.update_layout(
         template="simple_white",
