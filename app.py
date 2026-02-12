@@ -3,23 +3,51 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 
 # Initialize the app with the 'pages' plugin
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX]) 
+app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX, dbc.icons.BOOTSTRAP]) 
 # 'LUX' is a clean, professional theme. Try 'FLATLY' or 'MATERIA' if you prefer.
+
 
 server = app.server
 
 # --- THE NAVBAR ---
-navbar = dbc.NavbarSimple(
-    children=[
-        dbc.NavItem(dbc.NavLink("Climate Becky", href="/", active="exact")),
-        dbc.NavItem(dbc.NavLink("Climate Dashboard", href="/cag_dashboard", active="exact")),
-        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact")),
-        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact")),
-        dbc.NavItem(dbc.NavLink("Connect", href="/contact", active="exact")),
-    ],
-    brand="Becky Bolinger",
-    brand_href="/",
-    color="primary",
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            # --- BRAND (Logo + Name) ---
+            html.A(
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src="assets/logo.png", height="40px")), # Adjust height as needed
+                        dbc.Col(dbc.NavbarBrand("Climate Becky", className="ms-2")),
+                    ],
+                    align="center",
+                    className="g-0", # g-0 removes default grid gutters for tighter spacing
+                ),
+                href="/",
+                style={"textDecoration": "none"},
+            ),
+            
+            # --- HAMBURGER MENU (Mobile) ---
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            
+            # --- NAV LINKS ---
+            dbc.Collapse(
+                dbc.Nav(
+                    [
+                        dbc.NavItem(dbc.NavLink("Home", href="/", active="exact")),
+                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact")),
+                        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact")),
+                        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact")),
+                    ],
+                    className="ms-auto", # ms-auto pushes links to the right
+                    navbar=True,
+                ),
+                id="navbar-collapse",
+                navbar=True,
+            ),
+        ]
+    ),
+    color="dark",
     dark=True,
     className="mb-4",
 )
