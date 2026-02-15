@@ -8,6 +8,14 @@ dash.register_page(__name__, title='Publications | Climate Becky')
 # Easy to update! Just copy a block and fill in the new info.
 scientific_pubs = [
     {
+        "title": "Development of Alternate Climate Divisions for Colorado Based on Gridded Data",
+        "venue": "Journal of Applied and Service Climatology",
+        "year": "2024",
+        "link": "https://doi.org/10.46275/JOASC.2024.06.002",
+        "type": "Journal Article",
+        "authors": "R. S. Schumacher, R. A. Bolinger, and J. J. Lukas"
+    },
+    {
         "title": "3rd Edition of the Climate Change in Colorado Report",
         "venue": "Colorado State University",
         "year": "2024",
