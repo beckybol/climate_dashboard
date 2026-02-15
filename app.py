@@ -9,37 +9,34 @@ app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX, 
 
 server = app.server
 
-# --- THE NAVBAR ---
 navbar = dbc.Navbar(
     dbc.Container(
         [
-            # --- BRAND (Logo + Name) ---
             html.A(
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src="assets/logo.png", height="40px")), # Adjust height as needed
-                        dbc.Col(dbc.NavbarBrand("Climate Becky", className="ms-2")),
+                        dbc.Col(html.Img(src="assets/logo.png", height="100px")),
+                        #dbc.Col(dbc.NavbarBrand("Climate Becky", className="ms-2 fw-bold text-dark")),
                     ],
                     align="center",
-                    className="g-0", # g-0 removes default grid gutters for tighter spacing
+                    className="g-0",
                 ),
                 href="/",
                 style={"textDecoration": "none"},
             ),
             
-            # --- HAMBURGER MENU (Mobile) ---
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             
-            # --- NAV LINKS ---
             dbc.Collapse(
                 dbc.Nav(
                     [
-                        dbc.NavItem(dbc.NavLink("Home", href="/", active="exact")),
-                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact")),
-                        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact")),
-                        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact")),
+                        # Added 'text-dark' to links just to be safe, though light=True handles most
+                        dbc.NavItem(dbc.NavLink("Climate Becky", href="/", active="exact", className="text-dark")),
+                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact", className="text-dark")),
+                        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact", className="text-dark")),
+                        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact", className="text-dark")),
                     ],
-                    className="ms-auto", # ms-auto pushes links to the right
+                    className="ms-auto",
                     navbar=True,
                 ),
                 id="navbar-collapse",
@@ -47,9 +44,8 @@ navbar = dbc.Navbar(
             ),
         ]
     ),
-    color="dark",
-    dark=True,
-    className="mb-4",
+    color="#F7F0FA",    # <--- Changed from 'dark'
+    className="shadow sticky-top py-1", # <--- Adds a nice shadow and keeps nav visible while scrolling
 )
 
 # --- THE FOOTER ---
@@ -64,9 +60,14 @@ footer = html.Div(
 # --- MAIN LAYOUT ---
 app.layout = html.Div([
     navbar,
-    dbc.Container([
-        dash.page_container  # This is where the specific page content loads!
-    ], fluid=True, className="px-4"), # fluid=True uses full width, nice for dashboards
+    
+    # We wrap the content in a Div with a background color
+    html.Div([
+        dbc.Container([
+            dash.page_container
+        ], fluid=True, className="px-4 py-4") # Added padding
+    ], style={"backgroundColor": "#f0f2f5", "minHeight": "100vh"}), # <--- The "Facebook Gray" color
+    
     footer
 ])
 
