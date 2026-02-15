@@ -130,8 +130,8 @@ updates_section = dbc.Row(
                             className="w-100 text-start mb-2"
                         ),
                         dbc.Button(
-                            [html.I(className="bi bi-bluesky me-2"), " Bluesky"],
-                            href="https://bsky.app/profile/climatebecky.com",
+                            [html.I(className="bi bi-facebook me-2"), " Facebook"],
+                            href="https://www.facebook.com/climatebecky",
                             color="dark",
                             outline=True,
                             className="w-100 text-start"

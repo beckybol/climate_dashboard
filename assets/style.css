@@ -1,10 +1,28 @@
+/* Base Link Style (Clean & Simple) */
+.navbar-light .navbar-nav .nav-link {
+    color: #555 !important;       /* Dark Grey text */
+    font-weight: 500;
+    padding-bottom: 2px;          /* Give space for the line */
+    margin-right: 15px;           /* Spacing between items */
+    border-bottom: 2px solid transparent; /* Invisible border to prevent jumping */
+    transition: all 0.2s ease-in-out;
+}
+
 /* Change the link color on hover */
 .navbar-light .navbar-nav .nav-link:hover {
     color: #854C65 !important; /* This is Bootstrap "Primary" Blue */
-    transition: color 0.3s ease; /* Makes it smooth */
+    font-weight: 500;
+    border-bottom: 2px solid #854C65; /* Add a bottom border on hover */
 }
 
-/* Optional: Add a subtle underline animation */
+/* Active State (Shows which page you are on) */
+.navbar-light .navbar-nav .nav-link.active {
+    color: #555 !important;       /* Black text */
+    font-weight: bold;
+    border-bottom: 2px solid #854C65; /* Purple line under active page */
+}
+
+/* Optional: Add a subtle underline animation
 .navbar-light .navbar-nav .nav-link {
     position: relative;
 }
@@ -17,7 +35,7 @@
     display: block;
     margin-top: 5px;
     right: 0;
-    background: #854C65; /* Underline color */
+    background: #854C65; /* Underline color
     transition: width 0.3s ease;
     -webkit-transition: width 0.3s ease;
 }
@@ -27,3 +45,4 @@
     left: 0;
     background: #854C65;
 }
+*/

@@ -31,10 +31,10 @@ navbar = dbc.Navbar(
                 dbc.Nav(
                     [
                         # Added 'text-dark' to links just to be safe, though light=True handles most
-                        dbc.NavItem(dbc.NavLink("Climate Becky", href="/", active="exact", className="text-dark")),
-                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact", className="text-dark")),
-                        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact", className="text-dark")),
-                        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact", className="text-dark")),
+                        dbc.NavItem(dbc.NavLink("Climate Becky", href="/", active="exact")),
+                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact")),
+                        dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact")),
+                        dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact")),
                     ],
                     className="ms-auto",
                     navbar=True,
@@ -45,6 +45,7 @@ navbar = dbc.Navbar(
         ]
     ),
     color="#F7F0FA",    # <--- Changed from 'dark'
+    dark=False,        # <--- This ensures text is dark colored
     className="shadow sticky-top py-1", # <--- Adds a nice shadow and keeps nav visible while scrolling
 )
 
