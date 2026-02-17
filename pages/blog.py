@@ -3,7 +3,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
-dash.register_page(__name__, title='Blog | Climate Becky')
+dash.register_page(__name__, title='Blog | Climate Becky', image='assets/images/snow_forecast.png')
 
 # --- 1. DEFINE POSTS (THE BLOCK SYSTEM) ---
 # Each item in "content" can be:
@@ -96,13 +96,70 @@ def make_climate_post(post):
             fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300)
             post_children.append(dcc.Graph(figure=fig, className="shadow-sm border rounded mb-4"))
 
+    # Add Share Buttons at the bottom of the content list
+    post_children.append(make_share_buttons(post["title"], post["id"]))
+    
     return dbc.Card(
         dbc.CardBody(post_children),
         id=post["id"],  # <--- IMPORTANT: This assigns the ID to the HTML element
         className="mb-5 border-0"
     )
 
-# --- 4. LAYOUT ---
+# --- 4. HELPER: SOCIAL SHARE BUTTONS ---
+def make_share_buttons(post_title, post_id):
+    # 1. Define the base URL of your site (CHANGE THIS to your actual domain!)
+    base_url = "https://climatebecky.com/blog"
+    
+    # 2. Build the specific link to this post
+    post_link = f"{base_url}#{post_id}"
+    
+    # 3. Create the social links
+    # These are special URLs that open the platform's sharing tool
+    linkedin_url = f"https://www.linkedin.com/sharing/share-offsite/?url={post_link}"
+    facebook_url = f"https://www.facebook.com/sharer/sharer.php?u={post_link}"
+    bluesky_text = f"{post_title}: {post_link}"
+    bluesky_url = f"https://bsky.app/intent/compose?text={bluesky_text}"
+
+# --- ICONS ---
+    # 1. Bluesky (Loaded from file)
+    bluesky_icon = html.Img(
+        src="assets/bluesky.svg", 
+        style={"height": "18px", "width": "18px"}
+    )
+
+    # 2. LinkedIn & Facebook (Standard Bootstrap Icons)
+    linkedin_icon = html.I(className="bi bi-linkedin", style={"fontSize": "18px", "color": "#0a66c2"})
+    facebook_icon = html.I(className="bi bi-facebook", style={"fontSize": "18px", "color": "#1877f2"})
+
+    # --- BUTTON STYLE ---
+    # Flexbox centers the icon perfectly inside the button
+    btn_style = {
+        "width": "32px", 
+        "height": "32px", 
+        "display": "flex", 
+        "alignItems": "center", 
+        "justifyContent": "center",
+        "border": "none",
+        "background": "transparent"
+    }
+
+    return html.Div(
+        [
+            html.Small("Share: ", className="text-muted me-2"),
+            
+            # LinkedIn
+            dbc.Button(linkedin_icon, href=linkedin_url, target="_blank", style=btn_style, className="p-0 me-1 hover-scale"),
+            
+            # Bluesky
+            dbc.Button(bluesky_icon, href=bluesky_url, target="_blank", style=btn_style, className="p-0 me-1 hover-scale"),
+            
+            # Facebook
+            dbc.Button(facebook_icon, href=facebook_url, target="_blank", style=btn_style, className="p-0 me-1 hover-scale"),
+        ],
+        className="d-flex align-items-center mt-3"
+    )
+
+# --- 5. LAYOUT ---
 layout = dbc.Container(
     [
         dbc.Row(

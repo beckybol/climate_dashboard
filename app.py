@@ -32,7 +32,17 @@ navbar = dbc.Navbar(
                     [
                         # Added 'text-dark' to links just to be safe, though light=True handles most
                         dbc.NavItem(dbc.NavLink("Climate Becky", href="/", active="exact")),
-                        dbc.NavItem(dbc.NavLink("Dashboard", href="/cag_dashboard", active="exact")),
+                        # --- NEW DROPDOWN FOR DASHBOARDS ---
+                        dbc.DropdownMenu(
+                            children=[
+                                #dbc.DropdownMenuItem(divider=True),
+                                dbc.DropdownMenuItem("Snowfall Normals", href="/snow_dashboard"),
+                                dbc.DropdownMenuItem("Climate Anomalies", href="/cag_dashboard"),
+                            ],
+                            nav=True,
+                            in_navbar=True,
+                            label="Dashboards",
+                        ),
                         dbc.NavItem(dbc.NavLink("Portfolio", href="/portfolio", active="exact")),
                         dbc.NavItem(dbc.NavLink("About Me", href="/about", active="exact")),
                     ],
