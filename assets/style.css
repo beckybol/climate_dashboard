@@ -46,3 +46,8 @@
     background: #854C65;
 }
 */
+
+/* Offsets the anchor jump so the title isn't hidden behind the navbar */
+[id] {
+    scroll-margin-top: 100px;
+}

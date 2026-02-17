@@ -74,29 +74,14 @@ updates_section = dbc.Row(
                                 html.Div(
                                     [
                                         html.H5("Seasonal Snowpack Update", className="mb-1"),
-                                        html.Small("Feb 13, 2026", className="text-muted"),
+                                        html.Small("Feb 16, 2026", className="text-muted"),
                                     ],
                                     className="d-flex w-100 justify-content-between",
                                 ),
                                 html.P("A look at current snowpack conditions across the western US.", className="mb-1 text-muted small"),
                             ],
                             action=True,
-                            href="/blog/snowpack-update", # We'll build this link later
-                            className="border-0 border-bottom p-3"
-                        ),
-                        dbc.ListGroupItem(
-                            [
-                                html.Div(
-                                    [
-                                        html.H5("A Look Back at 2025 Climate Anomalies", className="mb-1"),
-                                        html.Small("Jan 20, 2026", className="text-muted"),
-                                    ],
-                                    className="d-flex w-100 justify-content-between",
-                                ),
-                                html.P("Analysis of temperature and precipitation anomalies in 2025 across the US.", className="mb-1 text-muted small"),
-                            ],
-                            action=True,
-                            href="/blog/2025-anomalies", # We'll build this link later
+                            href="/blog#snowpack-feb-2026",
                             className="border-0 border-bottom p-3"
                         ),
                     ],

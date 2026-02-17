@@ -72,5 +72,16 @@ app.layout = html.Div([
     footer
 ])
 
+# --- CALLBACK FOR MOBILE MENU ---
+@dash.callback(
+    dash.Output("navbar-collapse", "is_open"),
+    [dash.Input("navbar-toggler", "n_clicks")],
+    [dash.State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 if __name__ == "__main__":
     app.run(debug=True)
