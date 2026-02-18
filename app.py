@@ -37,7 +37,7 @@ navbar = dbc.Navbar(
                             children=[
                                 #dbc.DropdownMenuItem(divider=True),
                                 dbc.DropdownMenuItem("Snowfall Normals", href="/snow_dashboard"),
-                                dbc.DropdownMenuItem("Climate Anomalies", href="/cag_dashboard"),
+                                dbc.DropdownMenuItem("Climate At a Glance", href="/cag_dashboard"),
                             ],
                             nav=True,
                             in_navbar=True,

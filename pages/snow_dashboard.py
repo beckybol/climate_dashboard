@@ -10,7 +10,7 @@ import datetime
 import os
 import numpy as np
 
-dash.register_page(__name__, title='Snowfall Dashboard', path='/snow_dashboard')
+dash.register_page(__name__, title='Snowfall Dashboard | Climate Becky', path='/snow_dashboard')
 
 # --- 1. SETUP & DATA LOADING ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -154,7 +154,7 @@ layout = dbc.Container(
             [
                 # Map Column
                 dbc.Col(
-                    dcc.Graph(id="snow-map", style={"height": "600px"}),
+                    dcc.Graph(id="snow-map", style={"height": "600px"}, config={"scrollZoom": True}),
                     width=12, lg=6, className="mb-4"
                 ),
                 

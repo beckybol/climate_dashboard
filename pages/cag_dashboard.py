@@ -1,5 +1,5 @@
 import dash
-dash.register_page(__name__, path='/cag_dashboard')  # sets the path to the html file
+dash.register_page(__name__, title="Climate Anomalies Dashboard | Climate Becky", path='/cag_dashboard')  # sets the path to the html file
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc  # <--- NEW IMPORT
 import plotly.express as px
