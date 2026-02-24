@@ -210,7 +210,7 @@ def update_map(selected_state):
         mapbox_style="carto-positron",
         title=f"Snowfall Normals ({selected_state if selected_state else 'US'})"
     )
-    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, uirevision=selected_state) # Preserve state on update
     return fig
 
 

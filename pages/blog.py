@@ -30,6 +30,25 @@ blog_posts = [
             {"text": "While we can expect snowpack and forecasted runoff to improve with the current storm, the overall outlook for the season remains concerning. Additional late season snows and colder temperatures could minimize further deteriorating conditions and the risk of large wildfires this summer. Stay tuned over the next couple of months!"},
         ]
     },
+    {
+        "id": "noreaster-feb-2026",  # <--- NEW: Unique ID for linking
+        "title": "Epic Nor'easter Brings Record Snowfall to the Northeast",
+        "date": "February 23, 2026",
+        "tags": ["Snowfall", "Winter Storm"],
+        "content": [
+            {"image": "assets/images/northeast_satellite.jpg", "caption": "GOES-19 snapshot of the winter storm on the morning of February 23, 2026. Satellite imagery courtesy of NOAA and CSU/CIRA."},
+            {"text": "A major winter storm, named Winter Storm Hernando by the Weather Channel, has blanketed much of the Northeast with heavy snow and strong winds. While nor'easters are common in this region, this storm is likely to go down in the record books once the final totals are tallied."},
+            {"text": "The Community Collaborative Rain, Hail, and Snow Network (CoCoRaHS) is a fantastic resource for mapping a high density of snowfall observations for this event. As of Monday morning (February 23), snow totals over 1 foot extended from Delaware to Maine. 24-hour totals ranged between 15 and 25 inches for parts of New Jersey, New York, Connecticut, and Rhode Island. Weekly totals (which capture the bulk of the event through Monday morning) have exceed 2 feet in some locations."},
+            {"image": "assets/images/cocorahs_snowfall.png", "caption": "Accumulated snowfall observed over northeast from February 16 - February 23, 2026. Map courtesy of CoCoRaHS."},
+            {"text": "Snow continued to accumulate through Monday, and additional snowfall is expected through Tuesday. While totals aren't final yet, confirmation of a broken record has already been reported in Rhode Island. As of 1pm local time, the airport in Providence, RI had received 32.8\" of snow, breaking the record of 28.6\" set during the Blizzard of 1978."},
+            {"text": "New York City has seen its fair share from this storm as well. On top of an already snowy winter, Central Park has received over 30 inches for the season, beating out 9 of the last 10 years."},
+            {"image": "assets/images/nyc_accum.png", "caption": "Daily snowfall accumulation at Central Park COOP station since November 2025 through February 23, 2026. Average accumulation shown in brown line, and most recent 10 seasons also plotted. Data and graph courtesy of ACIS."},
+            {"text": "The persistent weather pattern that has locked the western U.S. in a ridge for much of the winter has also contributed to the cold and snow experienced in the northeast. The first day of climatological spring (March 1) will bring a close to the winter season, with the west finishing warmer than average and the east colder than average. That pattern will probably be obvious in the seasonal snowfall totals as well."},
+            {"text": "Check out my new snowfall dashboard, which shows monthly snowfall totals and accumulations for this season compared to average. For example, Loveland (my city) typically sees about 32\" of snow by the end of February, with 8\" of that just from February alone. This season, we've gotten a whopping 10.7 inches total. By comparison, Atlantic City, NJ usually gets about 17 inches annually, and they're already over 16 inches. Search for your area to see how you're doing compared to average!"},
+            {"button": "Launch Snowfall Dashboard", "link": "/snow_dashboard"},
+            {"image": "assets/images/loveland_snow.png", "caption": "Monthly snowfall totals for Loveland, CO for the 2025-2026 season compared to average. Data and graph courtesy of ACIS."},     
+        ]
+    },
 ]
 
 # --- 2. HELPER: BUILD THE SIDEBAR ---
@@ -95,6 +114,18 @@ def make_climate_post(post):
             fig = px.bar(x=block["graph"]["x"], y=block["graph"]["y"], title=block["graph"]["title"])
             fig.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=300)
             post_children.append(dcc.Graph(figure=fig, className="shadow-sm border rounded mb-4"))
+        elif "button" in block:
+            post_children.append(
+                html.Div(
+                    dbc.Button(
+                        block["button"],            # The text on the button
+                        href=block["link"],         # Where it goes
+                        color="primary",            # Bootstrap color
+                        className="px-4 py-2 text-uppercase fw-bold" # Styling
+                    ),
+                    className="text-center mb-4"    # Centers the button in the post
+                )
+            )
 
     # Add Share Buttons at the bottom of the content list
     post_children.append(make_share_buttons(post["title"], post["id"]))
