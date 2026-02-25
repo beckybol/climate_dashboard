@@ -1,6 +1,8 @@
 import dash
-from dash import html, dcc
+from dash import html, dcc, Input, Output
 import dash_bootstrap_components as dbc
+import pandas as pd
+import os
 import plotly.express as px
 
 dash.register_page(__name__, title='Blog | Climate Becky', image='assets/images/snow_forecast.png')
@@ -10,6 +12,40 @@ dash.register_page(__name__, title='Blog | Climate Becky', image='assets/images/
 # - {"text": "Your paragraph..."}
 # - {"image": "assets/filename.png", "caption": "Optional caption"}
 # - {"graph": {data...}}
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+records_csv = os.path.join(current_dir, '..', 'data', 'snow_records_202602.csv')
+
+try:
+    df_records = pd.read_csv(records_csv)
+    
+    # 2. Build the interactive map
+    fig_records = px.scatter_mapbox(
+        df_records,
+        lat="latitude",
+        lon="longitude",
+        color="snowfall",
+        size="snowfall",
+        hover_name="Station Name",
+        hover_data={
+            "latitude": False, 
+            "longitude": False,
+            "snowfall": True,
+            "years in record": True, 
+            "Station Type": True
+        },
+        color_continuous_scale=px.colors.diverging.Portland, # A nice snow-themed color scale
+        size_max=20,
+        zoom=5,
+        center={"lat": 40.5, "lon": -73.0}, # Centers roughly over New England (based on your data)
+        mapbox_style="carto-positron",
+        title="Record Tied/Broken Storm Totals (Feb 2026)"
+    )
+    fig_records.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+
+except FileNotFoundError:
+    # Fallback if the file is missing
+    fig_records = px.scatter(title="Data File Not Found")
 
 # --- 1. DATA WITH ANCHOR IDs ---
 blog_posts = [
@@ -33,17 +69,19 @@ blog_posts = [
     {
         "id": "noreaster-feb-2026",  # <--- NEW: Unique ID for linking
         "title": "Epic Nor'easter Brings Record Snowfall to the Northeast",
-        "date": "February 23, 2026",
+        "date": "February 24, 2026",
         "tags": ["Snowfall", "Winter Storm"],
         "content": [
             {"image": "assets/images/northeast_satellite.jpg", "caption": "GOES-19 snapshot of the winter storm on the morning of February 23, 2026. Satellite imagery courtesy of NOAA and CSU/CIRA."},
-            {"text": "A major winter storm, named Winter Storm Hernando by the Weather Channel, has blanketed much of the Northeast with heavy snow and strong winds. While nor'easters are common in this region, this storm is likely to go down in the record books once the final totals are tallied."},
-            {"text": "The Community Collaborative Rain, Hail, and Snow Network (CoCoRaHS) is a fantastic resource for mapping a high density of snowfall observations for this event. As of Monday morning (February 23), snow totals over 1 foot extended from Delaware to Maine. 24-hour totals ranged between 15 and 25 inches for parts of New Jersey, New York, Connecticut, and Rhode Island. Weekly totals (which capture the bulk of the event through Monday morning) have exceed 2 feet in some locations."},
-            {"image": "assets/images/cocorahs_snowfall.png", "caption": "Accumulated snowfall observed over northeast from February 16 - February 23, 2026. Map courtesy of CoCoRaHS."},
-            {"text": "Snow continued to accumulate through Monday, and additional snowfall is expected through Tuesday. While totals aren't final yet, confirmation of a broken record has already been reported in Rhode Island. As of 1pm local time, the airport in Providence, RI had received 32.8\" of snow, breaking the record of 28.6\" set during the Blizzard of 1978."},
-            {"text": "New York City has seen its fair share from this storm as well. On top of an already snowy winter, Central Park has received over 30 inches for the season, beating out 9 of the last 10 years."},
-            {"image": "assets/images/nyc_accum.png", "caption": "Daily snowfall accumulation at Central Park COOP station since November 2025 through February 23, 2026. Average accumulation shown in brown line, and most recent 10 seasons also plotted. Data and graph courtesy of ACIS."},
-            {"text": "The persistent weather pattern that has locked the western U.S. in a ridge for much of the winter has also contributed to the cold and snow experienced in the northeast. The first day of climatological spring (March 1) will bring a close to the winter season, with the west finishing warmer than average and the east colder than average. That pattern will probably be obvious in the seasonal snowfall totals as well."},
+            {"text": "A major winter storm, named Hernando by the Weather Channel, blanketed much of the Northeast with heavy snow and strong winds. While nor'easters are common in the region, this storm is likely to go down in the record books once the final totals are official."},
+            {"text": "Storm totals for the 48 hours preceding Tuesday monring (February 24), show widespread areas along the northeast coast from Delaware to Maine receiving over a foot of snow. Forty observers reported over 30 inches of snow."},
+            {"image": "assets/images/ne_snow_totals.png", "caption": "Accumulated snowfall reports over northeast from February 22 - February 24, 2026. Map courtesy of the National Weather Service."},
+            {"text": "Official reports of a broken record was reported in Rhode Island by the National Weather Service (NWS). By Monday evening, the airport in Providence, RI had received over 37 inches of snow, breaking the record of 28.6\" set during the Blizzard of 1978. Quite the feat, considering the station's long history of snowfall records dating back to 1932. In the map below, explore the other storm total records that were tied or broken, 21 in total."},
+            {"figure": fig_records},
+            {"text": "New York City has seen its fair share from this storm as well. A NWS COOP station near Islip on Long Island has now seen its snowiest February on record (reporting since 1963). On top of an already snowy winter, Central Park has received 42 inches for the season, beating out the last 10 years."},
+            {"image": "assets/images/islip_monthly_snow.png", "caption": "February monthly snowfall totals over time at Islip, NY. Data and graph courtesy of ACIS."},
+            {"image": "assets/images/nyc_accum.png", "caption": "Daily snowfall accumulation at Central Park COOP station since November 2025 through February 23, 2026 (green shaded). Average accumulation shown in brown line, and most recent 10 seasons also plotted. Data and graph courtesy of ACIS."},
+            {"text": "The persistent weather pattern that has locked the western U.S. in a ridge for much of the winter has also contributed to the active weather pattern in the northeast. The first day of climatological spring (March 1) will bring a close to the winter season, with the west finishing warmer than average and the east colder than average. That pattern will be evident in the seasonal snowfall totals as well."},
             {"text": "Check out my new snowfall dashboard, which shows monthly snowfall totals and accumulations for this season compared to average. For example, Loveland (my city) typically sees about 32\" of snow by the end of February, with 8\" of that just from February alone. This season, we've gotten a whopping 10.7 inches total. By comparison, Atlantic City, NJ usually gets about 17 inches annually, and they're already over 16 inches. Search for your area to see how you're doing compared to average!"},
             {"button": "Launch Snowfall Dashboard", "link": "/snow_dashboard"},
             {"image": "assets/images/loveland_snow.png", "caption": "Monthly snowfall totals for Loveland, CO for the 2025-2026 season compared to average. Data and graph courtesy of ACIS."},     
@@ -126,6 +164,14 @@ def make_climate_post(post):
                     className="text-center mb-4"    # Centers the button in the post
                 )
             )
+        elif "figure" in block:
+            post_children.append(
+                dcc.Graph(
+                    figure=block["figure"], 
+                    className="shadow-sm border rounded mb-4",
+                    config={"scrollZoom": True} # Lets users zoom the map with their mouse!
+                )
+            )
 
     # Add Share Buttons at the bottom of the content list
     post_children.append(make_share_buttons(post["title"], post["id"]))
@@ -193,6 +239,9 @@ def make_share_buttons(post_title, post_id):
 # --- 5. LAYOUT ---
 layout = dbc.Container(
     [
+        dcc.Location(id="blog-url", refresh=False),
+        html.Div(id="scroll-dummy"),        
+
         dbc.Row(
             [
                 # Left Column: The Blog Feed (Width 8)
@@ -215,5 +264,30 @@ layout = dbc.Container(
             ]
         )
     ],
+    fluid=True,
     className="py-5"
+)
+
+# --- AUTO-SCROLL CALLBACK ---
+# This forces the browser to scroll to the #id after the page finishes loading
+dash.clientside_callback(
+    """
+    function(url) {
+        // Check if there is a #hash in the URL
+        if (window.location.hash) {
+            // Wait 500 milliseconds for Dash to render the blog posts
+            setTimeout(function() {
+                // Find the element with that ID (removing the '#' symbol)
+                var element = document.getElementById(window.location.hash.substring(1));
+                if (element) {
+                    // Scroll it into view smoothly
+                    element.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            }, 500); 
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("scroll-dummy", "children"), # We just need a dummy output
+    Input("blog-url", "href")           # Triggers whenever the URL changes
 )

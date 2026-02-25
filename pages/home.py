@@ -89,11 +89,11 @@ updates_section = dbc.Row(
                                 html.Div(
                                     [
                                         html.H5("Epic Nor'easter Brings Record Snowfall to the Northeast", className="mb-1"),
-                                        html.Small("Feb 23, 2026", className="text-muted"),
+                                        html.Small("Feb 24, 2026", className="text-muted"),
                                     ],
                                     className="d-flex w-100 justify-content-between",
                                 ),
-                                html.P("A look at the record-breaking snowfall from a major winter storm in the Northeast.", className="mb-1 text-muted small"),
+                                html.P("How many stations broke or tied records for most snowfall in a single storm?", className="mb-1 text-muted small"),
                             ],
                             action=True,
                             href="/blog#noreaster-feb-2026",
