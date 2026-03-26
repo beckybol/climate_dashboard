@@ -4,14 +4,14 @@ from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc  # <--- NEW IMPORT
 import plotly.express as px
 import pandas as pd
+import os
 
-# 1. Initialize the App with a Professional Theme
-# external_stylesheets pulls in the "Flatly" theme (looks like a modern SaaS app)
-# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
-# server = app.server
+# --- 1. SETUP & DATA LOADING ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_dir = os.path.join(current_dir, '..', 'data')
 
 # 2. Load the Data
-df = pd.read_csv('master_climate_data.csv')
+df = pd.read_csv(os.path.join(data_dir, 'master_climate_data.csv'))
 map_df = df.groupby(['State_Code', 'State', 'Variable'])['Value'].mean().reset_index()
 
 #Ensure Date is datetime object for sorting/filtering
