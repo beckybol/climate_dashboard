@@ -50,20 +50,33 @@ except FileNotFoundError:
 # --- 1. DATA WITH ANCHOR IDs ---
 blog_posts = [
     {
-        "id": "snowpack-feb-2026",  # <--- NEW: Unique ID for linking
-        "title": "Seasonal Snowpack Update",
-        "date": "February 16, 2026",
-        "tags": ["Snowfall", "Snowpack", "Water Supply"],
+        "id": "heat-gdd-mar-2026",  # <--- NEW: Unique ID for linking
+        "title": "It's Not Just Extreme Heat, It's Accumulated Warmth",
+        "date": "April 1, 2026",
+        "tags": ["Growing Degree Days", "Extreme Heat"],
         "content": [
-            {"text": "A multi-day storm system is dropping big totals across the western U.S. this week. The Sierra Nevadas are likely to get over 3 feet of new snow, while the Interior Rockies and Cascades will see between 1-2 feet."},
-            {"image": "assets/images/snow_forecast.png", "caption": "72-hour snowfall forecast for the western U.S., as of February 16, 2026. Map from the Weather Prediction Center."},
-            {"text": "This storm is a welcome relief for many drought-stricken areas, especially given the near record low snowpack so far this season. NRCS snowpack is below to well-below average for most of the west. A startling number of SNOTEL sites in Colorado and Utah are reporting levels below the 5th percentile (meaning they are drier than 95% of historical records for this date)."},
-            {"image": "assets/images/swe_map.jpeg", "caption": "Current snowpack conditions across the western U.S. as of February 16, 2026. Map from NRCS SNOTEL."},
-            {"text": "At the Colorado Headwaters, snowpack is record low for this time of year. With only 56 days to go till normal peak snowpack, new accumulations would have to be record-breaking to get the basin to near-average levels. A much below average peak and early melt are much more likely. This has major implications for water supply, agriculture, and wildfire risk across the region."},
-            {"image": "assets/images/co_swe_time.png", "caption": "Projected peak snowpack for the Colorado Headwaters, as of February 16, 2026. Data from NRCS."},
-            {"text": "These concerningly low snowpack accumulations are evident in the Colorado Basin River Forecast Center's water supply forecasts. The April-July runoff forecast for Lake Powell (the Upper Colorado River Basin's largest reservoir) is 38% of average, about a 4-million acre-foot deficit."},
-            {"image": "assets/images/powell_inflows.png", "caption": "April-July runoff forecast for Lake Powell. Official forecast values from February 1, 2026. Data from the Colorado Basin River Forecast Center."},
-            {"text": "While we can expect snowpack and forecasted runoff to improve with the current storm, the overall outlook for the season remains concerning. Additional late season snows and colder temperatures could minimize further deteriorating conditions and the risk of large wildfires this summer. Stay tuned over the next couple of months!"},
+            {"text": "It's hard to overstate how significant the warmth has been so far this year in Colorado. Seeing all of our trees green up in the last few weeks has me thinking about accumulated warmth. Normally we look at Growing Degree Days after April 1 (A GDD is basically the number of degrees warmer than 50°F for a day). But I wanted to see how GDD has accumulated for this year compared to other years. The result for Fort Collins was quite shocking. 2026 has left all other years in the dust."},
+            {"image": "assets/images/gdd_fort_collins.png", "caption": "Total Growing Degree Days for Fort Collins, CO for January 1 - March 31 for all years, 1893-2026. Data and graph from ACIS."},
+            {"text": "The above graphic shows total accumulated GDD for Jan 1 - Mar 31 for all years in the record. It should be noted that Fort Collins is a clear example of urban heat island, and that is evident in the trend over time. Still, it's not normal to get over 50 GDDs by April. 2012 was the extreme example, when GDD exceeded 100 before the start of April. This year? Through March 31 the GDD accumulation is 221."},
+            {"image": "assets/images/gdd_accumulation_20260330.png", "caption": "Accumulated Growing Degree Days for Fort Collins, CO for 2026 (till the end of March) compared to average and record low years (2012) through May 31. Data and graph from ACIS."},
+            {"text": "Having lived through the spring of 2012 and the horrible drought that followed, it's just mind boggling that 2026 has not just surpassed 2012, but clobbered that record. In 2012, GDD didn't reach 221 until April 24. And what's normal? Well, in a normal year we don't pass 221 GDD until May 19. Here's one more stat to shake you - even if April was cold and we didn't accumulated any more GDDs, it would still be the second highest GDD by April 30 out of the 130+ year record (and over 100 GDDs higher than average)."},
+            {"text": "The outlook for April indicates it's likely to be above average temperatures, which means the GDD accumulation will continue to outpace the average. While a longer growing season may sound nice, there are some serious implications for agriculture, water demand, and wildfire risk. Early growth and blooms will be more vulnerable to late season freezes. There is already an increase in demand for irrigation water, but water restrictions are being put into place amidst severe drought across the state. The warmth also extends wildfire season, which is at risk to be a very active season this year. Stay tuned for more updates on the spring and summer outlook!"},
+            {"text": "Portions of article originally published on LinkedIn."}
+        ]
+    },
+    {
+        "id": "snowpack-mar-2026",  # <--- NEW: Unique ID for linking
+        "title": "Record Low Snowpack Across the West as Spring Begins",
+        "date": "March 24, 2026",
+        "tags": ["Snowpack", "Runoff", "Drought", "Water Supply"],
+        "content": [
+            {"text": "This year, we've seen record low snowpack. For the Upper Colorado River Basin, I wanted to take a look at how this year has compared to other low years in the record. Peak snowpack (most likely) occurred on March 9 at a meager 8.9\" of water in the snow. This is compared to a normal of 16\" around April 6 (median)."},
+            {"text": "Surprisingly, this is not the earliest peak date that has occurred. That actually happened in 2015, when the peak was 11.6\" on March 8 before melting started. While that was also much below average, and very early, we don't talk much about 2015. Well, that also happened to be the year of the Miracle May that soundly busted the drought in the Colorado Headwaters and water supplies exceeded forecasts."},
+            {"image": "assets/images/ucrb_swe_20260324.png", "caption": "Snow water equivalent (SWE) for the Upper Colorado River Basin for the 2025-2026 season compared to average and other low years. Data from NRCS."},
+            {"text": "It's hard to look at this graphic and realize that this year is making 2002 and 2012 look like decent years, but here we are. Is there hope of a Miracle May? While we don't know for sure what the pattern will be for May, likely not. For Colorado and Utah, May 2015 is in the record books as the wettest May. With the Climate Prediction Center showing increased chances of above average temperatures and below average precipitation for the region in April, rapid melting will continue."},
+            {"text": "The next record that will possibly be broken is melt out - when the snowpack reaches zero. Earliest dates of melt out stand at June 14 2002 and June 13 2012. Given the current level of snowpack, projections provided by NRCS (both high and low) indicate melt out likely before June 10. I'd also venture a guess that this could be the first time we see melt out in May."},
+            {"text": "Regardless of what's to come, the situation is bleak. Water utilities are already calling for restrictions and extra conservation measures. In Aurora, CO, they are urging residents to hold off on turning on irrigation systems until May 1 and putting strict rules into place. This summer will be a true test to how we manage and respond to a possible worst-case scenario."},
+            {"text": "Originally published on LinkedIn: https://www.linkedin.com/posts/climatebecky_this-year-weve-seen-record-low-snowpack-activity-7442604590052761601-ntJ9"}
         ]
     },
     {
@@ -87,6 +100,23 @@ blog_posts = [
             {"image": "assets/images/loveland_snow.png", "caption": "Monthly snowfall totals for Loveland, CO for the 2025-2026 season compared to average. Data and graph courtesy of ACIS."},     
         ]
     },
+    {
+        "id": "snowpack-feb-2026",  # <--- NEW: Unique ID for linking
+        "title": "Seasonal Snowpack Update",
+        "date": "February 16, 2026",
+        "tags": ["Snowfall", "Snowpack", "Water Supply"],
+        "content": [
+            {"text": "A multi-day storm system is dropping big totals across the western U.S. this week. The Sierra Nevadas are likely to get over 3 feet of new snow, while the Interior Rockies and Cascades will see between 1-2 feet."},
+            {"image": "assets/images/snow_forecast.png", "caption": "72-hour snowfall forecast for the western U.S., as of February 16, 2026. Map from the Weather Prediction Center."},
+            {"text": "This storm is a welcome relief for many drought-stricken areas, especially given the near record low snowpack so far this season. NRCS snowpack is below to well-below average for most of the west. A startling number of SNOTEL sites in Colorado and Utah are reporting levels below the 5th percentile (meaning they are drier than 95% of historical records for this date)."},
+            {"image": "assets/images/swe_map.jpeg", "caption": "Current snowpack conditions across the western U.S. as of February 16, 2026. Map from NRCS SNOTEL."},
+            {"text": "At the Colorado Headwaters, snowpack is record low for this time of year. With only 56 days to go till normal peak snowpack, new accumulations would have to be record-breaking to get the basin to near-average levels. A much below average peak and early melt are much more likely. This has major implications for water supply, agriculture, and wildfire risk across the region."},
+            {"image": "assets/images/co_swe_time.png", "caption": "Projected peak snowpack for the Colorado Headwaters, as of February 16, 2026. Data from NRCS."},
+            {"text": "These concerningly low snowpack accumulations are evident in the Colorado Basin River Forecast Center's water supply forecasts. The April-July runoff forecast for Lake Powell (the Upper Colorado River Basin's largest reservoir) is 38% of average, about a 4-million acre-foot deficit."},
+            {"image": "assets/images/powell_inflows.png", "caption": "April-July runoff forecast for Lake Powell. Official forecast values from February 1, 2026. Data from the Colorado Basin River Forecast Center."},
+            {"text": "While we can expect snowpack and forecasted runoff to improve with the current storm, the overall outlook for the season remains concerning. Additional late season snows and colder temperatures could minimize further deteriorating conditions and the risk of large wildfires this summer. Stay tuned over the next couple of months!"},
+        ]
+    }
 ]
 
 # --- 2. HELPER: BUILD THE SIDEBAR ---

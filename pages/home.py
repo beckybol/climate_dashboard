@@ -73,15 +73,30 @@ updates_section = dbc.Row(
                             [
                                 html.Div(
                                     [
-                                        html.H5("Seasonal Snowpack Update", className="mb-1"),
-                                        html.Small("Feb 16, 2026", className="text-muted"),
+                                        html.H5("It's Not Just Extreme Heat, It's Accumulated Warmth", className="mb-1"),
+                                        html.Small("Apr 1, 2026", className="text-muted"),
                                     ],
                                     className="d-flex w-100 justify-content-between",
                                 ),
-                                html.P("A look at current snowpack conditions across the western US.", className="mb-1 text-muted small"),
+                                html.P("A closer look at Growing Degree Days in Fort Collins, CO.", className="mb-1 text-muted small"),
                             ],
                             action=True,
-                            href="/blog#snowpack-feb-2026",
+                            href="/blog#heat-gdd-mar-2026",
+                            className="border-0 border-bottom p-3"
+                        ),
+                        dbc.ListGroupItem(
+                            [
+                                html.Div(
+                                    [
+                                        html.H5("Record Low Snowpack Across the West as Spring Begins", className="mb-1"),
+                                        html.Small("Mar 24, 2026", className="text-muted"),
+                                    ],
+                                    className="d-flex w-100 justify-content-between",
+                                ),
+                                html.P("Snowpack in the Upper Colorado River Basin Reached Record Low and Early Peak.", className="mb-1 text-muted small"),
+                            ],
+                            action=True,
+                            href="/blog#snowpack-mar-2026",
                             className="border-0 border-bottom p-3"
                         ),
                         dbc.ListGroupItem(
