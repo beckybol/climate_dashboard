@@ -73,15 +73,15 @@ updates_section = dbc.Row(
                             [
                                 html.Div(
                                     [
-                                        html.H5("It's Not Just Extreme Heat, It's Accumulated Warmth", className="mb-1"),
-                                        html.Small("Apr 1, 2026", className="text-muted"),
+                                        html.H5("A Deep Dive into the Extreme Heat in March 2026", className="mb-1"),
+                                        html.Small("Apr 17, 2026", className="text-muted"),
                                     ],
                                     className="d-flex w-100 justify-content-between",
                                 ),
-                                html.P("A closer look at Growing Degree Days in Fort Collins, CO.", className="mb-1 text-muted small"),
+                                html.P("Ten states broke the record for warmest March with monthly anomalies greater than 10°F.", className="mb-1 text-muted small"),
                             ],
                             action=True,
-                            href="/blog#heat-gdd-mar-2026",
+                            href="/blog#extreme-mar-2026",
                             className="border-0 border-bottom p-3"
                         ),
                         dbc.ListGroupItem(

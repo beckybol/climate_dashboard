@@ -50,6 +50,39 @@ except FileNotFoundError:
 # --- 1. DATA WITH ANCHOR IDs ---
 blog_posts = [
     {
+        "id": "extreme-mar-2026",  # <--- NEW: Unique ID for linking
+        "title": "A Deep Dive into the Extreme Heat in March 2026",
+        "date": "April 17, 2026",
+        "tags": ["Extreme Heat", "Climate Change", "Climate Variability"],
+        "content": [
+            {"text": "NOAA NCEI released its updated Climate at a Glance data for March on April 8, and the numbers are startling. March 2026 was the hottest March on record for 10 states, spanning from Oklahoma to California. For 12 states, this was the warmest October - March on record. The anomalous warmth for most of the last 6 months has been driven by a persistent ridge of high pressure that has been parked over the western U.S. This same pattern has locked Alaska in a deep trough, resulting in a cold winter and the state's fourth coldest March on record."},
+            {"image": "assets/images/temp_ranks_20260409.png", "caption": "Average statewide temperature ranks for March 2026. Data from NOAA NCEI Climate at a Glance."},
+            {"button": "Explore statewide anomalies and ranks", "link": "/cag_dashboard"},
+            {"text": "Records in and of themselves are one thing, and it's not a surprise to see state temperature records broken as the climate continues to warm. But these March anomalies didn't just break records, they shattered them. For Colorado, Nevada, Arizona, Utah, and New Mexico, this was not only their warmest March on record, the monthly average would also place in the top 10 warmest Aprils on record. For California, this March was warmer than all Marches and all Aprils in the 132-year record. The below graphic shows just how extreme March 2026 temperatures were for California, compared to all Marches in the 132-year record."},
+            {"image": "assets/images/ca_temp_dist.png", "caption": "March temperature distribution for California. Data from NOAA NCEI Climate at a Glance."},
+            {"text": "Just how extreme was March 2026 compared to other Marches? Consider California's distribution of March temperatures. When compared to the historic record (pre-1980), this March was so warm, it would be a 1 in 1,000,000 year event. Even when comparing to the modern record (1980-2025), this March is still a 1-in-11,000 year event. While climate change has increased the likelihood of an extremely warm March, this one was still extremely unlikely to occur."},
+            {"text": "For Arizona, March 2026 was a 1-in-200,000 year event in the modern record. Nine of the top 10 hottest March days in Phoenix occured in 2026 (records dating back to 1933) - this included 9 days over 100°F! The quadrant plot below shows just how much of an outlier March 2026 was compared to previous Marches for Arizona. For comparison, Idaho also recorded its warmest March, but the anomaly was still within the bounds of the distribution of previous Marches."},
+            {"image": "assets/images/AZ_ID_quadrants_202603.png", "caption": "Quadrant plots showing March precipitation vs. temperature for Arizona (left) and Idaho (right). Data from NOAA NCEI Climate at a Glance."},
+            {"text": "Looking at all months out of the year, a monthy anomaly greater than +10°F (over the 20th century average)is extremely rare. In fact, for California, Arizona, and New Mexico, it had never happened before. March 2026 surpassed +10°F in all three states. For Colorado and Utah, they both exceeded +10°F anomalies for the first time in December 2025. They since broke those records in March. See the table below for more stats. The last column shows the return period for these anomalies in the modern era. Both Arizona and New Mexico experienced an event that would occur less than 1 in 100,000 years; California and Utah's anomalies were over 1 in 10,000 year events; and for Colorado and Nevada, this event would be expected to occur less than 1 in every 5,000 years."},
+            {"table": {
+                "headers": ["State", "March 2026 Temperature (°F)", "Anomaly (°F)", "Modern Era Return Period"],
+                "rows": [
+                    ["Arizona", "63.4°F", "+13.9°F", "1 in 230,971 years"],
+                    ["California", "61.4°F", "+12.6°F", "1 in 11,566 years"],
+                    ["Colorado", "46.8°F", "+13.1°F", "1 in 6,289 years"],
+                    ["Idaho", "41.4°F", "+8.8°F", "1 in 84 years"],
+                    ["Nevada", "52.4°F", "+12.9°F", "1 in 5,483 years"],
+                    ["New Mexico", "55.6°F", "+12.1°F", "1 in 359,013 years"],
+                    ["Oklahoma", "60.5°F", "+11.2°F", "1 in 350 years"],
+                    ["Texas", "66.8°F", "+10.5°F", "1 in 650 years"],
+                    ["Utah", "51.1°F", "+13.8°F", "1 in 25,466 years"],
+                    ["Wyoming", "41.7°F", "+12.6°F", "1 in 375 years"]
+                ]
+            }},
+            {"text": "Portions of article originally published on LinkedIn."}
+        ]
+    },
+    {
         "id": "heat-gdd-mar-2026",  # <--- NEW: Unique ID for linking
         "title": "It's Not Just Extreme Heat, It's Accumulated Warmth",
         "date": "April 1, 2026",
@@ -200,6 +233,31 @@ def make_climate_post(post):
                     figure=block["figure"], 
                     className="shadow-sm border rounded mb-4",
                     config={"scrollZoom": True} # Lets users zoom the map with their mouse!
+                )
+            )
+        elif "table" in block:
+            # 1. Build the Header Row
+            table_header = [
+                html.Thead(html.Tr([html.Th(col) for col in block["table"]["headers"]]))
+            ]
+            
+            # 2. Build the Data Rows
+            table_rows = [
+                html.Tbody([
+                    html.Tr([html.Td(cell) for cell in row]) 
+                    for row in block["table"]["rows"]
+                ])
+            ]
+            
+            # 3. Assemble and style the Bootstrap Table
+            post_children.append(
+                dbc.Table(
+                    table_header + table_rows,
+                    bordered=True,
+                    striped=True,    # Alternating row colors
+                    hover=True,      # Highlights row on mouse hover
+                    responsive=True, # Adds a scrollbar on small screens if it's too wide
+                    className="mb-4 shadow-sm bg-white"
                 )
             )
 
