@@ -260,6 +260,20 @@ def make_climate_post(post):
                     className="mb-4 shadow-sm bg-white"
                 )
             )
+            # --- TYPE 7: YOUTUBE VIDEO (NEW) ---
+        elif "youtube" in block:
+            post_children.append(
+                html.Div(
+                    html.Iframe(
+                        # We extract just the video ID from the user and format the embed URL
+                        src=f"https://www.youtube.com/embed/{block['youtube']}",
+                        style={"width": "100%", "height": "450px", "border": "none", "borderRadius": "8px"},
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
+                        allowFullScreen=True
+                    ),
+                    className="mb-4 shadow-sm"
+                )
+            )
 
     # Add Share Buttons at the bottom of the content list
     post_children.append(make_share_buttons(post["title"], post["id"]))
