@@ -14,7 +14,7 @@ from data.blog_data import blog_posts, make_climate_post
 def get_post_title(post_id=None, **kwargs):
     if not post_id: return "Climate Blog | Becky Bolinger"
     post = next((p for p in blog_posts if p["id"] == post_id), None)
-    return f"{post['title']} | Becky Bolinger" if post else "Post Not Found"
+    return f"{post['title']} | Climate Becky" if post else "Post Not Found"
 
 def get_post_description(post_id=None, **kwargs):
     if not post_id: return "Climate updates and analysis."
@@ -42,8 +42,8 @@ dash.register_page(
     __name__, 
     path_template='/blog/<post_id>',
 #    title="Blog | Climate Becky", # Use a static string here
-    title=get_post_title(),  # Use the dynamic function for the title
-    description=get_post_description(),  # Use the dynamic function for the description
+    title=get_post_title,  # Use the dynamic function for the title
+    description=get_post_description,  # Use the dynamic function for the description
 #    description="Read the latest in-depth climate analysis and information."
 )
 
