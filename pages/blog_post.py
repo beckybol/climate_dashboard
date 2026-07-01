@@ -41,9 +41,10 @@ def get_post_image(post_id=None, **kwargs):
 dash.register_page(
     __name__, 
     path_template='/blog/<post_id>',
-    title="Blog | Climate Becky", # Use a static string here
-    description="Read the latest in-depth climate analysis and information.",
-    image="https://climatebecky.com/assets/images/co_swe_time.png"
+#    title="Blog | Climate Becky", # Use a static string here
+    title=get_post_title(),  # Use the dynamic function for the title
+    description=get_post_description(),  # Use the dynamic function for the description
+#    description="Read the latest in-depth climate analysis and information."
 )
 
 # ==========================================
@@ -99,20 +100,4 @@ def layout(post_id=None, **kwargs):
             dbc.Row(dbc.Col([full_post_content, share_buttons], width=12, lg=8, className="mx-auto"))
         ],
         fluid=True, className="py-5"
-    )
-
-from dash import Output, Input, html
-
-@callback(
-    Output('meta-tags-container', 'children'),
-    Input('url', 'pathname')
-)
-def update_meta_tags(pathname):
-    # Instead of html.Meta, use dcc.Markdown or a raw html.Script
-    # to inject the meta tags into the DOM.
-    return html.Script(
-        f"""
-        document.querySelector('meta[property="og:type"]').setAttribute('content', 'article');
-        document.querySelector('meta[property="og:title"]').setAttribute('content', 'Climate Blog | Becky Bolinger');
-        """
     )

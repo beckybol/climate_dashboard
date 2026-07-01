@@ -6,7 +6,6 @@ import dash_bootstrap_components as dbc
 app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.LUX, dbc.icons.BOOTSTRAP]) 
 # 'LUX' is a clean, professional theme. Try 'FLATLY' or 'MATERIA' if you prefer.
 
-
 server = app.server
 
 navbar = dbc.Navbar(
@@ -15,7 +14,7 @@ navbar = dbc.Navbar(
             html.A(
                 dbc.Row(
                     [
-                        dbc.Col(html.Img(src="assets/logo.png", height="100px")),
+                        dbc.Col(html.Img(src="/assets/logo.png", height="100px")),
                         #dbc.Col(dbc.NavbarBrand("Climate Becky", className="ms-2 fw-bold text-dark")),
                     ],
                     align="center",
