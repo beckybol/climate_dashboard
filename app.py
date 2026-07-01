@@ -70,14 +70,18 @@ footer = html.Div(
 
 # --- MAIN LAYOUT ---
 app.layout = html.Div([
+    # 1. Routing & Meta-Tag Injector
+    dcc.Location(id='url'),
+    html.Div(id='meta-tags-container'), 
+    
     navbar,
     
-    # We wrap the content in a Div with a background color
+    # 2. Main Content
     html.Div([
         dbc.Container([
             dash.page_container
-        ], fluid=True, className="px-4 py-4") # Added padding
-    ], style={"backgroundColor": "#f0f2f5", "minHeight": "100vh"}), # <--- The "Facebook Gray" color
+        ], fluid=True, className="px-4 py-4")
+    ], style={"backgroundColor": "#f0f2f5", "minHeight": "100vh"}),
     
     footer
 ])
