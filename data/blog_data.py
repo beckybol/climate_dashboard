@@ -46,6 +46,7 @@ blog_posts = [
         "title": "It's Not Just Extreme Heat, It's Accumulated Warmth",
         "date": "April 1, 2026",
         "tags": ["Growing Degree Days", "Extreme Heat"],
+        "preview_image": "/assets/images/gdd_accumulation_20260330.png",  # <--- NEW: Preview image for the blog list
         "content": [
             {"text": "It's hard to overstate how significant the warmth has been so far this year in Colorado. Seeing all of our trees green up in the last few weeks has me thinking about accumulated warmth. Normally we look at Growing Degree Days after April 1 (A GDD is basically the number of degrees warmer than 50°F for a day). But I wanted to see how GDD has accumulated for this year compared to other years. The result for Fort Collins was quite shocking. 2026 has left all other years in the dust."},
             {"image": "/assets/images/gdd_fort_collins.png", "caption": "Total Growing Degree Days for Fort Collins, CO for January 1 - March 31 for all years, 1893-2026. Data and graph from ACIS."},
@@ -60,6 +61,7 @@ blog_posts = [
         "id": "snowpack-mar-2026",  # <--- NEW: Unique ID for linking
         "title": "Record Low Snowpack Across the West as Spring Begins",
         "date": "March 24, 2026",
+        "preview_image": "/assets/images/ucrb_swe_20260324.png",  # <--- NEW: Preview image for the blog list
         "tags": ["Snowpack", "Runoff", "Drought", "Water Supply"],
         "content": [
             {"text": "This year, we've seen record low snowpack. For the Upper Colorado River Basin, I wanted to take a look at how this year has compared to other low years in the record. Peak snowpack (most likely) occurred on March 9 at a meager 8.9\" of water in the snow. This is compared to a normal of 16\" around April 6 (median)."},
@@ -76,6 +78,7 @@ blog_posts = [
         "title": "Epic Nor'easter Brings Record Snowfall to the Northeast",
         "date": "February 24, 2026",
         "tags": ["Snowfall", "Winter Storm"],
+        "preview_image": "/assets/images/northeast_satellite.jpg",  # <--- NEW: Preview image for the blog list
         "content": [
             {"image": "/assets/images/northeast_satellite.jpg", "caption": "GOES-19 snapshot of the winter storm on the morning of February 23, 2026. Satellite imagery courtesy of NOAA and CSU/CIRA."},
             {"text": "A major winter storm, named Hernando by the Weather Channel, blanketed much of the Northeast with heavy snow and strong winds. While nor'easters are common in the region, this storm is likely to go down in the record books once the final totals are official."},
@@ -97,6 +100,7 @@ blog_posts = [
         "title": "Seasonal Snowpack Update",
         "date": "February 16, 2026",
         "tags": ["Snowfall", "Snowpack", "Water Supply"],
+        "preview_image": "/assets/images/snow_forecast.png",  # <--- NEW: Preview image for the blog list
         "content": [
             {"text": "A multi-day storm system is dropping big totals across the western U.S. this week. The Sierra Nevadas are likely to get over 3 feet of new snow, while the Interior Rockies and Cascades will see between 1-2 feet."},
             {"image": "/assets/images/snow_forecast.png", "caption": "72-hour snowfall forecast for the western U.S., as of February 16, 2026. Map from the Weather Prediction Center."},

@@ -44,7 +44,7 @@ dash.register_page(
 #    title="Blog | Climate Becky", # Use a static string here
     title=get_post_title,  # Use the dynamic function for the title
     description=get_post_description,  # Use the dynamic function for the description
-#    description="Read the latest in-depth climate analysis and information."
+    image=get_post_image,  # Use the dynamic function for the image
 )
 
 # ==========================================
@@ -96,7 +96,20 @@ def layout(post_id=None, **kwargs):
     
     return dbc.Container(
         [
-            dbc.Button([html.I(className="bi bi-arrow-left me-2"), "Back to Blog"], href="/blog", color="link", className="text-decoration-none mb-4 p-0"),
+            dbc.Button(
+                [html.I(className="bi bi-arrow-left me-2"), "Back to Blog"], 
+                href="/blog", 
+                color="link", 
+                className="text-decoration-none mb-4 p-0",
+                style={
+                    "position": "sticky",
+                    "top": "80px", # Adjust this based on your navbar height
+                    "zIndex": "1000",
+                    "backgroundColor": "rgba(255, 255, 255, 0.9)", # Light background so it's readable over text
+                    "padding": "10px",
+                    "borderRadius": "5px"
+                }
+            ),            
             dbc.Row(dbc.Col([full_post_content, share_buttons], width=12, lg=8, className="mx-auto"))
         ],
         fluid=True, className="py-5"

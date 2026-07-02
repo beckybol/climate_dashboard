@@ -1,8 +1,11 @@
 # pages/blog.py
+from datetime import datetime
+
 import dash
 from dash import html
 import dash_bootstrap_components as dbc
 from data.blog_data import blog_posts
+from datetime import datetime, timedelta
 
 dash.register_page(__name__, path='/blog', title='Blog | Climate Becky', description='Becky\'s Blog: Climate Change, Weather, and Climate Variability Updates')
 
@@ -14,9 +17,25 @@ def create_snippet_card(post):
             snippet = block["text"][:180] + "..."
             break
 
+    # 1. Parse the post date (Assuming format "Month Day, Year")
+    post_date = datetime.strptime(post["date"], "%B %d, %Y")
+    
+    # 2. Check if the post is less than 14 days old
+    is_new = datetime.now() - post_date < timedelta(days=14)
+    
+    # 3. Create the "New" badge if applicable
+    new_badge = dbc.Badge("NEW!", color="warning", className="ms-2") if is_new else None
+
+    # Update your title line to include the badge
+    title_row = html.Div([
+        html.H4(post["title"], className="card-title text-primary fw-bold d-inline"),
+        new_badge
+    ],
+    className="d-flex align-items-center mb-2")  # Aligns title and badge nicely
+    
     # Build the main text body of the preview
     card_body_content = [
-        html.H4(post["title"], className="card-title text-primary fw-bold"),
+        title_row,
         html.H6(post["date"], className="card-subtitle mb-2 text-muted"),
         html.P(snippet, className="card-text mt-2", style={"fontSize": "0.95rem"}),
         dbc.Button("Read More", href=f"/blog/{post['id']}", color="outline-primary", size="sm")
