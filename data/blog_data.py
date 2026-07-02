@@ -16,7 +16,6 @@ blog_posts = [
         "content": [
             {"text": "NOAA NCEI released its updated Climate at a Glance data for March on April 8, and the numbers are startling. March 2026 was the hottest March on record for 10 states, spanning from Oklahoma to California. For 12 states, this was the warmest October - March on record. The anomalous warmth for most of the last 6 months has been driven by a persistent ridge of high pressure that has been parked over the western U.S. This same pattern has locked Alaska in a deep trough, resulting in a cold winter and the state's fourth coldest March on record."},
             {"image": "/assets/images/temp_ranks_20260409.png", "caption": "Average statewide temperature ranks for March 2026. Data from NOAA NCEI Climate at a Glance."},
-            {"button": "Explore statewide anomalies and ranks", "link": "/cag_dashboard"},
             {"text": "Records in and of themselves are one thing, and it's not a surprise to see state temperature records broken as the climate continues to warm. But these March anomalies didn't just break records, they shattered them. For Colorado, Nevada, Arizona, Utah, and New Mexico, this was not only their warmest March on record, the monthly average would also place in the top 10 warmest Aprils on record. For California, this March was warmer than all Marches and all Aprils in the 132-year record. The below graphic shows just how extreme March 2026 temperatures were for California, compared to all Marches in the 132-year record."},
             {"image": "/assets/images/ca_temp_dist.png", "caption": "March temperature distribution for California. Data from NOAA NCEI Climate at a Glance."},
             {"text": "Just how extreme was March 2026 compared to other Marches? Consider California's distribution of March temperatures. When compared to the historic record (pre-1980), this March was so warm, it would be a 1 in 1,000,000 year event. Even when comparing to the modern record (1980-2025), this March is still a 1-in-11,000 year event. While climate change has increased the likelihood of an extremely warm March, this one was still extremely unlikely to occur."},
@@ -38,6 +37,7 @@ blog_posts = [
                     ["Wyoming", "41.7°F", "+12.6°F", "1 in 375 years"]
                 ]
             }},
+            {"button": "Explore county and station records for March 2026", "link": "/march-2026-heat"},
             {"text": "Portions of article originally published on LinkedIn."}
         ]
     },

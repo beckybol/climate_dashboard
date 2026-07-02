@@ -44,7 +44,6 @@ dash.register_page(
 #    title="Blog | Climate Becky", # Use a static string here
     title=get_post_title,  # Use the dynamic function for the title
     description=get_post_description,  # Use the dynamic function for the description
-    image=get_post_image,  # Use the dynamic function for the image
 )
 
 # ==========================================
@@ -96,21 +95,35 @@ def layout(post_id=None, **kwargs):
     
     return dbc.Container(
         [
-            dbc.Button(
-                [html.I(className="bi bi-arrow-left me-2"), "Back to Blog"], 
-                href="/blog", 
-                color="link", 
-                className="text-decoration-none mb-4 p-0",
-                style={
-                    "position": "sticky",
-                    "top": "80px", # Adjust this based on your navbar height
-                    "zIndex": "1000",
-                    "backgroundColor": "rgba(255, 255, 255, 0.9)", # Light background so it's readable over text
-                    "padding": "10px",
-                    "borderRadius": "5px"
-                }
-            ),            
-            dbc.Row(dbc.Col([full_post_content, share_buttons], width=12, lg=8, className="mx-auto"))
+            # Use a Row to hold the sidebar (button) and the main content
+            dbc.Row(
+                [
+                    # Sidebar Column (contains the sticky button)
+                    dbc.Col(
+                        dbc.Button(
+                            [html.I(className="bi bi-arrow-left me-2"), "Back to Blog"], 
+                            href="/blog", 
+                            color="link", 
+                            className="text-decoration-none p-0",
+                            style={
+                                "position": "-webkit-sticky",
+                                "position": "sticky",
+                                "top": "120px", # Needs to be enough to clear the navbar
+                                "zIndex": "1000",
+                            }
+                        ),
+                        width=2, # Sidebar width
+                        className="d-none d-md-block" # Only show on large screens
+                    ),
+                    
+                    # Main Content Column
+                    dbc.Col(
+                        [full_post_content, share_buttons], 
+                        width=12, lg=8
+                    ),
+                ],
+                justify="center"
+            )
         ],
         fluid=True, className="py-5"
     )
