@@ -9,20 +9,20 @@ hero_section = dbc.Container(
     [
         html.H3("Turning Climate Data into Action.", className="fw-bold"),
         html.P(
-            "I'm Becky Bolinger, and I'm a climatologist with 20 years of experience. Climate is my passion and I want to share it with others. I build interactive tools that make complex climate science accessible, understandable, and usable.",
+            "I'm Becky Bolinger, and I'm a climatologist with 20 years of experience. Climate is my passion and I want to share it with others. I build tools that make complex climate science accessible, understandable, and usable. I also communicate climate science and current climate events through my blog, media interviews, and presentations.",
             className="lead text-muted mb-4",
             style={"maxWidth": "800px"}
         ),
         dbc.Stack(
             [
                 dbc.Button("View My Portfolio", href="/portfolio", color="outline-dark", size="md", className="me-1"),
-                dbc.Button("Read the Blog", href="/blog", color="outline-dark", size="md", className="me-1"),
+                dbc.Button("Check Out My Blog", href="/blog", color="outline-dark", size="md", className="me-1"),
             ],
             direction="horizontal",
         )
     ],
     fluid=True,
-    className="py-5"
+    className="pt-5"
 )
 
 # --- SECTION 2: FEATURED DASHBOARD ---
@@ -42,13 +42,12 @@ featured_dashboard = dbc.Card(
                     dbc.CardBody(
                         [
                             html.H6("FEATURED PROJECT", className="text-uppercase text-primary fw-bold mb-2"),
-                            html.H2("US Climate Anomalies Dashboard", className="card-title"),
+                            html.H2("March 2026 Extreme Heat Analysis", className="card-title"),
                             html.P(
-                                "An interactive exploration of temperature and precipitation anomalies across the US. "
-                                "Built with Python Dash and NOAA NCEI data to visualize climate trends and extremes.",
+                                "March 2026 was record warm for 10 states in the west. Explore the record-breaking heat for stations and counties across the western U.S., and see how it compares to historical climate data with this interactive tool.",
                                 className="card-text text-muted",
                             ),
-                            dbc.Button("Launch Dashboard", href="/cag_dashboard", color="dark", className="mt-3"),
+                            dbc.Button("Launch March 2026 Heat Explorer", href="/march-2026-heat", color="dark", className="mt-3"),
                         ]
                     ),
                     className="col-md-6 d-flex align-items-center",
@@ -66,9 +65,24 @@ updates_section = dbc.Row(
         # Left Column: Blog Teasers
         dbc.Col(
             [
-                html.H3("Latest from the Blog", className="mb-4"),
+                html.H3("Latest Blog Posts", className="mb-4"),
                 dbc.ListGroup(
                     [
+                        dbc.ListGroupItem(
+                            [
+                                html.Div(
+                                    [
+                                        html.H5("Late June Brings Large Wildfires to Colorado and Utah", className="mb-1"),
+                                        html.Small("Jul 3, 2026", className="text-muted"),
+                                    ],
+                                    className="d-flex w-100 justify-content-between",
+                                ),
+                                html.P("Over 400,000 acres have burned in Colorado and Utah over the past two weeks.", className="mb-1 text-muted small"),
+                            ],
+                            action=True,
+                            href="/blog/wildfires-june-2026",
+                            className="border-0 border-bottom p-3"
+                        ),
                         dbc.ListGroupItem(
                             [
                                 html.Div(
@@ -81,7 +95,7 @@ updates_section = dbc.Row(
                                 html.P("Ten states broke the record for warmest March with monthly anomalies greater than 10°F.", className="mb-1 text-muted small"),
                             ],
                             action=True,
-                            href="/blog#extreme-mar-2026",
+                            href="/blog/extreme-mar-2026",
                             className="border-0 border-bottom p-3"
                         ),
                         dbc.ListGroupItem(
@@ -96,22 +110,7 @@ updates_section = dbc.Row(
                                 html.P("Snowpack in the Upper Colorado River Basin Reached Record Low and Early Peak.", className="mb-1 text-muted small"),
                             ],
                             action=True,
-                            href="/blog#snowpack-mar-2026",
-                            className="border-0 border-bottom p-3"
-                        ),
-                        dbc.ListGroupItem(
-                            [
-                                html.Div(
-                                    [
-                                        html.H5("Epic Nor'easter Brings Record Snowfall to the Northeast", className="mb-1"),
-                                        html.Small("Feb 24, 2026", className="text-muted"),
-                                    ],
-                                    className="d-flex w-100 justify-content-between",
-                                ),
-                                html.P("How many stations broke or tied records for most snowfall in a single storm?", className="mb-1 text-muted small"),
-                            ],
-                            action=True,
-                            href="/blog#noreaster-feb-2026",
+                            href="/blog/snowpack-mar-2026",
                             className="border-0 border-bottom p-3"
                         ),
                     ],
@@ -126,10 +125,17 @@ updates_section = dbc.Row(
         dbc.Col(
             [
                 html.H3("Let's Connect", className="mb-4"),
-                html.P("I share daily updates on climate science and data viz.", className="text-muted mb-4"),
+                html.P("I share regular updates on climate science and data viz.", className="text-muted mb-4"),
                 
                 dbc.Stack(
                     [
+                        dbc.Button(
+                            [html.I(className="bi bi-envelope me-2"), " Email"],
+                            href="mailto:climate.becky@gmail.com",
+                            color="primary",
+                            outline=True,
+                            className="w-100 text-start mb-2"
+                        ),
                         dbc.Button(
                             [html.I(className="bi bi-linkedin me-2"), " LinkedIn"],
                             href="https://linkedin.com/in/climatebecky",

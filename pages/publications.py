@@ -78,6 +78,7 @@ media_articles = [
     {"title": "Depleted by drought, Lakes Powell and Mead were doomed from the beginning", "source": "Washington Post", "date": "Sep 2021", "link": "https://www.washingtonpost.com/weather/2021/09/10/lake-powell-mead-drought-history/"},
     {"title": "Warming is clearly visible in new US 'climate normal' datasets", "source": "The Conversation", "date": "May 2021", "link": "https://theconversation.com/warming-is-clearly-visible-in-new-us-climate-normal-datasets-159684"},
     {"title": "Did the March 2021 snowstorm improve drought conditions across Colorado?", "source": "Weather5280", "date": "Mar 2021", "link": "https://www.weather5280.com/2021/03/18/did-the-march-2021-snowstorm-improve-drought-conditions-across-colorado"},
+    {"title": "How Drought Prone is Your State? A Look at the Top States and Counties in Drought Over the Last Two Decades", "source": "NOAA Drought.gov", "date": "Aug 2019", "link": "https://www.drought.gov/news/how-drought-prone-your-state-look-top-states-and-counties-drought-over-last-two-decades"}
 ]
 
 
@@ -113,7 +114,8 @@ def make_media_item(item):
     color_map = {
         "Washington Post": "dark",
         "Weather5280": "warning",
-        "NOAA Climate.gov": "primary",
+        "NOAA Climate.gov": "success",
+        "NOAA Drought.gov": "success",
         "The Conversation": "danger"
     }
     badge_color = color_map.get(item["source"], "secondary")

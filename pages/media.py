@@ -9,6 +9,13 @@ dash.register_page(__name__, title='Media Interviews | Climate Becky')
 # You can add the older ones by copying a line and filling in the details!
 media_list = [
     {
+        "title": "Colorado under statewide drought emergency",
+        "outlet": "9News",
+        "date": "June 4, 2026",
+        "link": "https://www.9news.com/video/news/state/colorado-climate/colorado-under-statewide-drought-emergency/73-81a05f10-c158-4c7f-acda-5239cc882cfa",
+        "type": "Video"
+    },
+    {
         "title": "Colorado faces significant snow deficit as ski season struggles",
         "outlet": "9News",
         "date": "Dec 28, 2025",

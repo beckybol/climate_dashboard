@@ -8,6 +8,30 @@ import pandas as pd
 # --- 1. DATA WITH ANCHOR IDs ---
 blog_posts = [
     {
+        "id": "wildfires-june-2026",  # <--- NEW: Unique ID for linking
+        "title": "Late June Brings Large Wildfires to Colorado and Utah",
+        "date": "July 3, 2026",
+        "tags": ["Wildfires", "Drought"],
+        "preview_image": "https://satlib.cira.colostate.edu/wp-content/uploads/sites/23/2026/07/20260701170617-20260702000117_g19_abi_conus_dayfire_g19fires_labels.gif",  # <--- NEW: Preview image for the blog list
+        "content": [
+            {"image": "https://satlib.cira.colostate.edu/wp-content/uploads/sites/23/2026/06/20260629150101-20260629235401_g18_abi_meso_geocolor_smoke_nolabels_lowres.gif", "caption": "GOES-18 satellite imagery showing wildfire smoke in Colorado and Utah on June 29, 2026. Imagery courtesy of NOAA and CSU/CIRA."},
+            {"text": "For the Interior Rockies, June marks peak wildfire season. This year, the risk of large wildfires is elevated due to record low snowpack and drought. For Colorado and Utah, wildfire activity was relatively quiet through the first half of June. So what led up to the explosion of activity in the last week of June?"},
+            {"header": "The Delayed Setup"},
+            {"text": "Despite record low snowpack, some late season storms in May helped delay meltout and keep fuels a bit more moist than they would have been otherwise. Although precipitation was still below average, and drought conditions persisted, moisture in the air into early June limited the onset of wildfires."},
+            {"image": "/assets/images/20260623_rdews_int_west_trd.png", "caption": "Drought conditions across the Intermountain West as of June 23, 2026. Map from the U.S. Drought Monitor."},
+            {"header": "The Switch to Dry"},
+            {"text": "Like flipping a switch, dry air took over the region. The graphic below shows EDDI, a drought index that estimates the dryness of the atmosphere due to a combination of temperature, solar radiation, wind, and humidity. Higher values (denoted in the map with oranges and reds) shows where the atmosphere is much drier than normal as of the end of June. The change map on the right shows the drying trend over the last 30 days. This rapid trend dried out the vegetation, on top of the existing drought conditions, setting the stage for enhanced wildfire activity"},
+            {"image": "/assets/images/eddi_20260625.png", "caption": "Evaporative Demand Drought Index (EDDI) for the Intermountain West as of June 23, 2026. Map from NOAA's Climate Prediction Center."},
+            {"text": "All the ingredients for wildfires are present - hot temperatures, dry air, and windy conditions on top of a drought landscape. Once an ignition occurs, either from human activities or lightning, the wildfires start. But what is needed for large and uncontrollable wildfires?"},
+            {"header": "A Closer Look at Wildfire Metrics"},
+            {"text": "One of the surprising contributors to wildfire activity begins months in advance, where precipitation provides the necessary growth for vegetation that ultimately dries out and becomes fuel for a fire. Prior to the onset of the snowpack season, The Four Corners region received much above average precipitation in October thanks to two tropical systems coming from the Pacific Ocean. Fast forward to spring, drought conditions have dried out that vegetative growth, adding fuel for fires. The graphic below shows 3 different wildfire indices. The first index is the Energy Release Component (ERC), which is a measure of the energy and heat of a wildfire. The second index is the Burning Index, which measures flame length and the difficulty of containing a fire. The third index is 100-hr fuel moisture, which measures the moisture content in dead vegetation. By June 27, all three indices indicated very high or extreme fire danger. The Burning Index was record high for many parts of the Four Corners area."},
+            {"image": "/assets/images/fire_indices_20260627.png", "caption": "Wildfire indices for Colorado and Utah as of June 27, 2026. Maps from the Climate Toolbox."},
+            {"header": "The Stage is Set"},
+            {"text": "With all the ingredients in place, the last week of June brought a sudden surge of wildfires to Colorado and Utah, with 11 wildfires starting between June 26th and June 29th. Wildfires have now burned more than 400,000 acres in Colorado and Utah. Unfortunately, extreme heat and dry conditions are expected into the middle of July, bringing little relief to the current wildfire situation. Explore the interactive map below for more info on the significant wildfires still impacting the region."},
+            {"dynamic_figure": "jun_2026_wildfire_map", "caption": "Active wildfires across Colorado and Utah as of July 3, 2026. Data from the National Interagency Fire Center and Watch Duty."}
+        ]
+    },
+    {
         "id": "extreme-mar-2026",  # <--- NEW: Unique ID for linking
         "title": "A Deep Dive into the Extreme Heat in March 2026",
         "date": "April 17, 2026",
@@ -135,6 +159,8 @@ def make_climate_post(post):
     for block in post["content"]:
         if "text" in block:
             post_children.append(html.P(block["text"], className="card-text mb-3"))
+        elif "header" in block:
+            post_children.append(html.H4(block["header"], className="card-subtitle mb-3 fw-bold"))
         elif "image" in block:
             img_component = html.Img(src=block["image"], className="img-fluid rounded border shadow-sm w-100")
             if "caption" in block:
