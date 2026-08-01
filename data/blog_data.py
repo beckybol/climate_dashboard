@@ -8,6 +8,29 @@ import pandas as pd
 # --- 1. DATA WITH ANCHOR IDs ---
 blog_posts = [
     {
+        "id": "big-thompson-aug-2026",  # <--- NEW: Unique ID for linking
+        "title": "A look back at the Big Thompson Flood 50 years later",
+        "date": "August 1, 2026",
+        "tags": ["Flood", "Disaster"],
+        "preview_image": "/assets/images/HousenearDrake.png",  # <--- NEW: Preview image for the blog list
+        "content": [
+            {"text": "Happy Birthday, Colorado! This year marks our country's 250th birthday, and Colorado's 150th birthday. But this year also marks the 50th anniversary of the Big Thompson Flood, which occurred on July 31 - August 1, 1976. This flood was the deadliest flood in Colorado history, claiming 144 lives and causing over $35 million in damages (over $200 million in today's dollars) ."},
+            {"image": "/assets/images/BigThompsonFlood1976.png", "caption": "The Big Thompson Flood by the numbers."},
+            {"text": "Yesterday, July 31, 2026, the Big Thompson Canyon was filled with those attending a memorial service to remember those who lost their lives in the flood. And just west, in Estes Park, Colorado, the Colorado Climate Center held a half day symposium dedicated to the 50th anniversary of the event. Experts from the Climate Center and the National Weather Service, archivists, emergency managers, and engineers shared their perspectives on the flood."},
+            {"image": "/assets/images/IMG_7187.jpeg", "caption": "Me and Allie Mazurek, the climatologist at the Colorado Climate Center and organizer of the symposium."},
+            {"text": "So many unfortunate ingredients came together that night to result in the devastating disaster the followed. Meteorologically, deep moisture in the atmopshere combined with strong upslope winds that pushed up the foothills and into the Big Thompson Canyon. About 600 people lived in the canyon at that time. Additionally, summertime meant many campers and visitors, including many from out of state. The evening of July 31 was a Saturday night, and the eve of Colorado's big celebration. So, it was estimated that between 2500 and 4000 people were in the canyon that night."},
+            {"text": "Communication was limited to phone lines, which were knocked out at some point during the event. And emergency management was a non-existent concept at the time. FEMA would not be created until 1979. The poor timing of the event (overnight), meant that many people were caught completely unaware. Those who did know it was coming had limited choices: stay in their homes, climb to higher ground, or drive out of the canyon. For those who chose to drive, the outcome was likely to end in tragedy."},
+            {"image": "/assets/images/IMG_7181.jpeg", "caption": "Photo from the aftermath is presented to the audience during the symposium."},
+            {"text": "The presentations provided insightful descriptions into the power of the event. The river rose 19-20 feet that night and took 25 minutes to travel between Glen Comfort and Drake. The fast moving water moved cars, homes, and rocks, with the largest boulder being 23 feet in diameter. It also carried away the irrigation pipe at the mouth of the canyon, which would have weighed nearly 500 tons! At its peak, the flow of the river was an astonishing 31,200 cubic feet per second, or about a 1 in 2000 year event."},
+            {"text": "Following the symposium, we had the opportunity to take a brief field trip into the canyon, guided by engineers who assessed the damage after the flood. We visited Vistienz-Smith Park, the site of a power station that was destroyed in the flood. All that remained of the 2-story concrete building was rubble and 3 large turbines, which you can still see today."},
+            {"image": "/assets/images/IMG_7183.jpeg", "caption": "The turbines from the power station that was destroyed in the flood."},
+            {"image": "/assets/images/IMG_7185.jpeg", "caption": "A plaque in the park describes the details of the 1976 flood and the 2013 flood, which also caused significant damage to the canyon."},
+            {"text": "The symposium provided insights into the extensive research that has been done since the flood to better understand the event and test its likelihood of occurring in a warmer climate. Since then, many advances have been made in weather and flood forecasting, warning communications, and emergency management and responses. For Colorado, floods remain our deadliest hazard, and are a continued risk for much of the state. Nationally, the we know that these deadly floods can have devastating impacts elsewhere, like in Hill Country Texas in 2025. Learning more about these events, how to prepare for them, and how to respond when they happen, can hopefully save more lives in the future."},
+            {"text": "For more information on the event, including more fascinating photos, video accounts from survivors, and the original news story on NBC Nightly News, check out this story map by the National Weather Service Boulder Office."},
+            {"button": "View the NWS Story Map", "link": "https://storymaps.arcgis.com/stories/f50f8e71282f4f8f9f2ed2420511e0b6"}
+        ]
+    },
+    {
         "id": "wildfires-june-2026",  # <--- NEW: Unique ID for linking
         "title": "Late June Brings Large Wildfires to Colorado and Utah",
         "date": "July 3, 2026",
